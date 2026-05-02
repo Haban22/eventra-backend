@@ -1,0 +1,9 @@
+package com.eventra.backend.module.user.controller;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+@RestController
+@RequestMapping("/api/organizers")
+public class OrganizerController {
+    // TODO: implement
+}
