@@ -1,14 +1,14 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.config.JwtConfig;
-import com.eventra.auth.dto.response.AuthResponse;
-import com.eventra.auth.dto.response.UserSummaryResponse;
-import com.eventra.auth.entity.RefreshToken;
-import com.eventra.auth.entity.User;
-import com.eventra.auth.repository.RefreshTokenRepository;
-import com.eventra.auth.security.JwtUtil;
-import com.eventra.auth.util.SecureTokenGenerator;
-import com.eventra.auth.util.TokenHashUtil;
+import com.eventra.backend.module.auth.config.JwtConfig;
+import com.eventra.backend.module.auth.dto.response.AuthResponse;
+import com.eventra.backend.module.auth.dto.response.UserSummaryResponse;
+import com.eventra.backend.module.auth.entity.RefreshToken;
+import com.eventra.backend.module.auth.entity.User;
+import com.eventra.backend.module.auth.repository.RefreshTokenRepository;
+import com.eventra.backend.module.auth.security.JwtUtil;
+import com.eventra.backend.module.auth.util.SecureTokenGenerator;
+import com.eventra.backend.module.auth.util.TokenHashUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

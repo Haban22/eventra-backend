@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.config.AppProperties;
+import com.eventra.backend.module.auth.config.AppProperties;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;

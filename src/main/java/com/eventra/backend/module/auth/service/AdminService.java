@@ -1,12 +1,12 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.dto.response.*;
-import com.eventra.auth.entity.User;
-import com.eventra.auth.entity.UserRole;
-import com.eventra.auth.entity.UserStatus;
-import com.eventra.auth.exception.ApiException;
-import com.eventra.auth.repository.OrganizerProfileRepository;
-import com.eventra.auth.repository.UserRepository;
+import com.eventra.backend.module.auth.dto.response.*;
+import com.eventra.backend.module.auth.entity.User;
+import com.eventra.backend.module.auth.entity.UserRole;
+import com.eventra.backend.module.auth.entity.UserStatus;
+import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
+import com.eventra.backend.module.auth.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

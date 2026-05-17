@@ -1,10 +1,10 @@
 package com.eventra.backend.module.auth.controller;
 
-import com.eventra.auth.dto.request.*;
-import com.eventra.auth.dto.response.AuthResponse;
-import com.eventra.auth.dto.response.MessageResponse;
-import com.eventra.auth.security.AuthPrincipal;
-import com.eventra.auth.service.AuthService;
+import com.eventra.backend.module.auth.dto.request.*;
+import com.eventra.backend.module.auth.dto.response.AuthResponse;
+import com.eventra.backend.module.auth.dto.response.MessageResponse;
+import com.eventra.backend.module.auth.security.AuthPrincipal;
+import com.eventra.backend.module.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

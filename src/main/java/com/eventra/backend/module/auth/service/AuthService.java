@@ -1,13 +1,13 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.dto.request.*;
-import com.eventra.auth.dto.response.AuthResponse;
-import com.eventra.auth.entity.*;
-import com.eventra.auth.exception.ApiException;
-import com.eventra.auth.repository.*;
-import com.eventra.auth.security.JwtUtil;
-import com.eventra.auth.util.SecureTokenGenerator;
-import com.eventra.auth.util.TokenHashUtil;
+import com.eventra.backend.module.auth.dto.request.*;
+import com.eventra.backend.module.auth.dto.response.AuthResponse;
+import com.eventra.backend.module.auth.entity.*;
+import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.*;
+import com.eventra.backend.module.auth.security.JwtUtil;
+import com.eventra.backend.module.auth.util.SecureTokenGenerator;
+import com.eventra.backend.module.auth.util.TokenHashUtil;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.springframework.dao.DataIntegrityViolationException;

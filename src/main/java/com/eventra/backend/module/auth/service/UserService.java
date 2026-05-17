@@ -1,11 +1,11 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.dto.request.PasswordChangeRequest;
-import com.eventra.auth.dto.request.UpdateMeRequest;
-import com.eventra.auth.dto.response.UserResponse;
-import com.eventra.auth.entity.User;
-import com.eventra.auth.exception.ApiException;
-import com.eventra.auth.repository.UserRepository;
+import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
+import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
+import com.eventra.backend.module.auth.dto.response.UserResponse;
+import com.eventra.backend.module.auth.entity.User;
+import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package com.eventra.backend.module.auth.service;
 
-import com.eventra.auth.entity.AdminAuditLog;
-import com.eventra.auth.entity.UserStatus;
-import com.eventra.auth.repository.AuditLogRepository;
+import com.eventra.backend.module.auth.entity.AdminAuditLog;
+import com.eventra.backend.module.auth.entity.UserStatus;
+import com.eventra.backend.module.auth.repository.AuditLogRepository;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
