@@ -1,18 +1,19 @@
 package com.eventra.backend.module.auth.controller;
 
-import com.eventra.auth.dto.request.PasswordChangeRequest;
-import com.eventra.auth.dto.request.UpdateMeRequest;
-import com.eventra.auth.dto.response.MessageResponse;
-import com.eventra.auth.dto.response.UserResponse;
-import com.eventra.auth.security.AuthPrincipal;
-import com.eventra.auth.service.UserService;
+import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
+import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
+import com.eventra.backend.module.auth.dto.response.MessageResponse;
+import com.eventra.backend.module.auth.dto.response.UserResponse;
+import com.eventra.backend.module.auth.security.AuthPrincipal;
+import com.eventra.backend.module.auth.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("/api/users")
+@RestController("authUserController")
+@RequestMapping("/api/v1/auth/users")
 public class UserController {
+
     private final UserService userService;
 
     public UserController(UserService userService) {

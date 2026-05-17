@@ -1,7 +1,7 @@
 package com.eventra.backend.module.auth.dto.response;
 
-import com.eventra.auth.entity.OrganizerProfile;
-import com.eventra.auth.entity.User;
+import com.eventra.backend.module.auth.entity.OrganizerProfile;
+import com.eventra.backend.module.auth.entity.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;

@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.security;
 
-import com.eventra.auth.entity.UserRole;
+import com.eventra.backend.module.auth.entity.UserRole;
 
 import java.util.UUID;
 

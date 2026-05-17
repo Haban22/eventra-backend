@@ -37,14 +37,14 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final TransactionTemplate transactionTemplate;
-    private final com.eventra.auth.config.AppProperties appProperties;
+    private final com.eventra.backend.module.auth.config.AppProperties appProperties;
 
     public AuthService(UserRepository userRepository, OrganizerProfileRepository organizerProfileRepository,
                        EmailVerificationTokenRepository emailTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository,
                        RefreshTokenRepository refreshTokenRepository, AuthProviderRepository authProviderRepository,
                        PasswordEncoder passwordEncoder, EmailService emailService, RateLimitService rateLimitService,
                        TokenService tokenService, JwtUtil jwtUtil, GoogleIdTokenVerifier googleIdTokenVerifier,
-                       TransactionTemplate transactionTemplate, com.eventra.auth.config.AppProperties appProperties) {
+                       TransactionTemplate transactionTemplate, com.eventra.backend.module.auth.config.AppProperties appProperties) {
         this.userRepository = userRepository;
         this.organizerProfileRepository = organizerProfileRepository;
         this.emailTokenRepository = emailTokenRepository;
@@ -294,7 +294,13 @@ public class AuthService {
         token.setTokenHash(TokenHashUtil.sha256(raw));
         token.setExpiresAt(Instant.now().plusSeconds(86_400));
         emailTokenRepository.save(token);
-        emailService.sendVerificationEmail(user.getEmail(), raw);
+        
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), raw);
+        } catch (Exception e) {
+            System.err.println("Failed to send verification email: " + e.getMessage());
+            System.err.println("Verification raw token (for dev): " + raw);
+        }
     }
 
     private ApiException invalidCredentials() {

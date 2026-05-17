@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@Service
+@Service("authUserService")
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

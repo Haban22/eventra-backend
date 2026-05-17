@@ -1,7 +1,7 @@
 package com.eventra.backend.module.auth.security;
 
-import com.eventra.auth.config.JwtConfig;
-import com.eventra.auth.entity.UserRole;
+import com.eventra.backend.module.auth.config.JwtConfig;
+import com.eventra.backend.module.auth.entity.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

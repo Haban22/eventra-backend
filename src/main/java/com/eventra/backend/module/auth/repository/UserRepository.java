@@ -1,8 +1,8 @@
 package com.eventra.backend.module.auth.repository;
 
-import com.eventra.auth.entity.User;
-import com.eventra.auth.entity.UserRole;
-import com.eventra.auth.entity.UserStatus;
+import com.eventra.backend.module.auth.entity.User;
+import com.eventra.backend.module.auth.entity.UserRole;
+import com.eventra.backend.module.auth.entity.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

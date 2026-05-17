@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.repository;
 
-import com.eventra.auth.entity.AdminAuditLog;
+import com.eventra.backend.module.auth.entity.AdminAuditLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.security;
 
-import com.eventra.auth.repository.UserRepository;
+import com.eventra.backend.module.auth.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.repository;
 
-import com.eventra.auth.entity.PasswordResetToken;
+import com.eventra.backend.module.auth.entity.PasswordResetToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

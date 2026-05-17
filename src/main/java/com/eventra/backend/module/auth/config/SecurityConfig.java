@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.config;
 
-import com.eventra.auth.security.JwtFilter;
+import com.eventra.backend.module.auth.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

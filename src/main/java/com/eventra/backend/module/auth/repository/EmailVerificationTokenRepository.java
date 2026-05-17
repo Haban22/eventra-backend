@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.repository;
 
-import com.eventra.auth.entity.EmailVerificationToken;
+import com.eventra.backend.module.auth.entity.EmailVerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

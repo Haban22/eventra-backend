@@ -1,9 +1,9 @@
 package com.eventra.backend.module.auth.controller;
 
-import com.eventra.auth.dto.request.AdminReasonRequest;
-import com.eventra.auth.dto.response.*;
-import com.eventra.auth.security.AuthPrincipal;
-import com.eventra.auth.service.AdminService;
+import com.eventra.backend.module.auth.dto.request.AdminReasonRequest;
+import com.eventra.backend.module.auth.dto.response.*;
+import com.eventra.backend.module.auth.security.AuthPrincipal;
+import com.eventra.backend.module.auth.service.AdminService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,6 +1,6 @@
 package com.eventra.backend.module.auth.repository;
 
-import com.eventra.auth.entity.RefreshToken;
+import com.eventra.backend.module.auth.entity.RefreshToken;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
