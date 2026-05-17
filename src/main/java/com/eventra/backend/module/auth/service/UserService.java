@@ -1,0 +1,65 @@
+package com.eventra.backend.module.auth.service;
+
+import com.eventra.auth.dto.request.PasswordChangeRequest;
+import com.eventra.auth.dto.request.UpdateMeRequest;
+import com.eventra.auth.dto.response.UserResponse;
+import com.eventra.auth.entity.User;
+import com.eventra.auth.exception.ApiException;
+import com.eventra.auth.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse me(UUID userId) {
+        return UserResponse.from(load(userId));
+    }
+
+    @Transactional
+    public UserResponse updateMe(UUID userId, UpdateMeRequest request) {
+        User user = load(userId);
+        if (request.fullName() != null) user.setFullName(request.fullName().trim());
+        if (request.phone() != null) user.setPhone(request.phone().isBlank() ? null : request.phone());
+        if (request.profilePictureUrl() != null) user.setProfilePictureUrl(request.profilePictureUrl().isBlank() ? null : request.profilePictureUrl());
+        if (request.languagePreference() != null) user.setLanguagePreference(request.languagePreference());
+        if (request.notificationPreferences() != null) user.setNotificationPreferences(request.notificationPreferences());
+        return UserResponse.from(user);
+    }
+
+    @Transactional
+    public void changePassword(UUID userId, String accessJti, long accessExpEpoch, PasswordChangeRequest request) {
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "PASSWORDS_DO_NOT_MATCH", "Passwords do not match");
+        }
+        User user = load(userId);
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "WRONG_CURRENT_PASSWORD", "Wrong current password");
+        }
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "SAME_AS_CURRENT", "New password must be different");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        tokenService.revokeAllForUser(user.getId());
+        tokenService.blacklist(accessJti, accessExpEpoch - java.time.Instant.now().getEpochSecond());
+    }
+
+    private User load(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "User not found"));
+    }
+}
