@@ -32,6 +32,41 @@ public class OrganizerProfile {
     @Column(name = "social_link")
     private String socialLink;
 
+    @Column(name = "experience")
+    private String experience;
+
+    @Column(name = "identity_type")
+    private String identityType;
+
+    @Column(name = "team_size")
+    private String teamSize;
+
+    @Column(name = "tagline")
+    private String tagline;
+
+    @Column(name = "brand_color")
+    private String brandColor;
+
+    @Column(name = "logo_url")
+    private String logoUrl;
+
+    @Column(name = "is_verified", nullable = false)
+    private boolean isVerified = false;
+
+    @Column(name = "email_verified_org", nullable = false)
+    private boolean emailVerifiedOrg = false;
+
+    @Column(name = "phone_verified", nullable = false)
+    private boolean phoneVerified = false;
+
+    @Column(name = "id_verified", nullable = false)
+    private boolean idVerified = false;
+
+    @ElementCollection
+    @CollectionTable(name = "organizer_event_types", joinColumns = @JoinColumn(name = "organizer_profile_id"))
+    @Column(name = "event_type")
+    private java.util.List<String> eventTypes = new java.util.ArrayList<>();
+
     @Column(name = "approved_by")
     private UUID approvedBy;
 

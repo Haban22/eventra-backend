@@ -80,6 +80,37 @@ public class AdminService {
     }
 
     @Transactional
+    public void suspendWithDetails(UUID adminId, UUID id, String reason, Instant suspendedUntil, String ipAddress) {
+        User user = load(id);
+        UserStatus previous = user.getStatus();
+        user.setStatus(UserStatus.SUSPENDED);
+        user.setSuspensionReason(reason);
+        user.setSuspendedUntil(suspendedUntil);
+        tokenService.bulkRevokeAndBlacklist(user);
+        auditService.log(adminId, id, "USER_SUSPENDED_DETAILED", previous, UserStatus.SUSPENDED, reason, ipAddress);
+    }
+
+    @Transactional
+    public void verifyOrganizer(UUID adminId, UUID id, String ipAddress) {
+        User user = load(id);
+        if (user.getRole() != UserRole.ORGANIZER) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "NOT_AN_ORGANIZER", "User is not an organizer");
+        }
+        var profile = organizerProfileRepository.findByUserId(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Organizer profile not found"));
+        profile.setVerified(true);
+        auditService.log(adminId, id, "ORGANIZER_VERIFIED", user.getStatus(), user.getStatus(), null, ipAddress);
+    }
+
+    @Transactional
+    public void forcePasswordReset(UUID adminId, UUID id, String ipAddress) {
+        User user = load(id);
+        user.setMustResetPassword(true);
+        tokenService.bulkRevokeAndBlacklist(user);
+        auditService.log(adminId, id, "FORCE_PASSWORD_RESET", user.getStatus(), user.getStatus(), null, ipAddress);
+    }
+
+    @Transactional
     public void disable(UUID adminId, UUID id, String reason, String ipAddress) {
         changeStatusWithRevocation(adminId, id, UserStatus.DISABLED, "USER_DISABLED", reason, ipAddress);
     }

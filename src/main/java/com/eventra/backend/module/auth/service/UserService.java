@@ -3,8 +3,12 @@ package com.eventra.backend.module.auth.service;
 import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
 import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
 import com.eventra.backend.module.auth.dto.response.UserResponse;
+import com.eventra.backend.module.auth.entity.OrganizerProfile;
 import com.eventra.backend.module.auth.entity.User;
+import com.eventra.backend.module.auth.entity.UserRole;
+import com.eventra.backend.module.auth.entity.UserStatus;
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
 import com.eventra.backend.module.auth.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,11 +20,16 @@ import java.util.UUID;
 @Service("authUserService")
 public class UserService {
     private final UserRepository userRepository;
+    private final OrganizerProfileRepository organizerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+    public UserService(UserRepository userRepository, 
+                       OrganizerProfileRepository organizerProfileRepository,
+                       PasswordEncoder passwordEncoder, 
+                       TokenService tokenService) {
         this.userRepository = userRepository;
+        this.organizerProfileRepository = organizerProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
     }
@@ -39,6 +48,29 @@ public class UserService {
         if (request.languagePreference() != null) user.setLanguagePreference(request.languagePreference());
         if (request.notificationPreferences() != null) user.setNotificationPreferences(request.notificationPreferences());
         return UserResponse.from(user);
+    }
+
+    @Transactional
+    public void requestOrganizerUpgrade(UUID userId, String reason) {
+        User user = load(userId);
+        if (user.getRole() == UserRole.ORGANIZER) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "ALREADY_ORGANIZER", "User is already an organizer");
+        }
+        user.setRole(UserRole.ORGANIZER);
+        user.setStatus(UserStatus.PENDING_ADMIN_APPROVAL);
+
+        organizerProfileRepository.findByUserId(userId).ifPresentOrElse(
+                profile -> {
+                    if (reason != null) profile.setOrganizationDescription(reason);
+                },
+                () -> {
+                    OrganizerProfile profile = new OrganizerProfile();
+                    profile.setUser(user);
+                    profile.setOrganizationName(user.getFullName() + "'s Organization");
+                    profile.setOrganizationDescription(reason != null ? reason : "");
+                    organizerProfileRepository.save(profile);
+                }
+        );
     }
 
     @Transactional

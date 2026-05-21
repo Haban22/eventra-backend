@@ -18,11 +18,12 @@ public record OrganizerDetailResponse(
         @JsonProperty("organization_description") String organizationDescription,
         @JsonProperty("website_url") String websiteUrl,
         @JsonProperty("social_link") String socialLink,
-        @JsonProperty("registration_date") Instant registrationDate
+        @JsonProperty("registration_date") Instant registrationDate,
+        @JsonProperty("is_verified") boolean isVerified
 ) {
     public static OrganizerDetailResponse from(User user, OrganizerProfile profile) {
         return new OrganizerDetailResponse(user.getId(), user.getFullName(), user.getEmail(), user.getPhone(), user.getStatus().name(),
                 user.getProfilePictureUrl(), profile.getOrganizationName(), profile.getOrganizationDescription(),
-                profile.getWebsiteUrl(), profile.getSocialLink(), user.getCreatedAt());
+                profile.getWebsiteUrl(), profile.getSocialLink(), user.getCreatedAt(), profile.isVerified());
     }
 }

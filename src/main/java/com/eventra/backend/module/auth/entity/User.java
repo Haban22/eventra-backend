@@ -9,9 +9,12 @@ import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -67,6 +70,27 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "onboarding_completed", nullable = false)
+    private boolean onboardingCompleted = false;
+
+    @Column(name = "suspension_reason")
+    private String suspensionReason;
+
+    @Column(name = "suspended_until")
+    private Instant suspendedUntil;
+
+    @Column(name = "must_reset_password", nullable = false)
+    private boolean mustResetPassword = false;
+
+    @Column(name = "city", length = 100)
+    private String city;
+
+    @ElementCollection
+    @CollectionTable(name = "user_interests",
+            joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "interest", length = 50)
+    private List<String> interests = new ArrayList<>();
 
     @PrePersist
     void prePersist() {
