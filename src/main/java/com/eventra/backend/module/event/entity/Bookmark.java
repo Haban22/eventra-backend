@@ -10,21 +10,24 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "categories")
-public class Category {
+@Table(
+    name = "bookmarks",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_bookmark_user_event",
+        columnNames = {"user_id", "event_id"}
+    )
+)
+public class Bookmark {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, length = 100)
-    private String name;
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
-    @Column(length = 50)
-    private String icon;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(name = "event_id", nullable = false)
+    private UUID eventId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
