@@ -31,11 +31,11 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public PageResponse<OrganizerSummaryResponse> pendingOrganizers(int page, int size) {
-        var users = userRepository.findByRoleAndStatus(UserRole.ORGANIZER, UserStatus.PENDING_ADMIN_APPROVAL, PageRequest.of(page, size));
-        var data = users.stream()
-                .map(user -> OrganizerSummaryResponse.from(user, organizerProfileRepository.findByUserId(user.getId()).orElseThrow()))
+        var profiles = organizerProfileRepository.findByApprovedAtIsNullAndRejectionReasonIsNull(PageRequest.of(page, size));
+        var data = profiles.stream()
+                .map(profile -> OrganizerSummaryResponse.from(profile.getUser(), profile))
                 .toList();
-        return new PageResponse<>(data, users.getTotalElements(), page, size);
+        return new PageResponse<>(data, profiles.getTotalElements(), page, size);
     }
 
     @Transactional(readOnly = true)
@@ -49,8 +49,11 @@ public class AdminService {
     @Transactional
     public void approveOrganizer(UUID adminId, UUID id, String ipAddress) {
         User user = load(id);
-        requireStatus(user, UserStatus.PENDING_ADMIN_APPROVAL);
+        if (user.getStatus() != UserStatus.PENDING_ADMIN_APPROVAL && user.getStatus() != UserStatus.ACTIVE) {
+            throw new ApiException(HttpStatus.CONFLICT, "WRONG_STATUS", "User is not in a status that can be approved");
+        }
         UserStatus previous = user.getStatus();
+        user.setRole(UserRole.ORGANIZER);
         user.setStatus(UserStatus.ACTIVE);
         var profile = organizerProfileRepository.findByUserId(id).orElseThrow();
         profile.setApprovedBy(adminId);
@@ -61,12 +64,18 @@ public class AdminService {
     @Transactional
     public void rejectOrganizer(UUID adminId, UUID id, String reason, String ipAddress) {
         User user = load(id);
-        requireStatus(user, UserStatus.PENDING_ADMIN_APPROVAL);
+        if (user.getStatus() != UserStatus.PENDING_ADMIN_APPROVAL && user.getStatus() != UserStatus.ACTIVE) {
+            throw new ApiException(HttpStatus.CONFLICT, "WRONG_STATUS", "User is not in a status that can be rejected");
+        }
         UserStatus previous = user.getStatus();
-        user.setStatus(UserStatus.REJECTED);
+        if (user.getRole() == UserRole.ORGANIZER) {
+            user.setStatus(UserStatus.REJECTED);
+        } else {
+            user.setStatus(UserStatus.ACTIVE);
+        }
         var profile = organizerProfileRepository.findByUserId(id).orElseThrow();
         profile.setRejectionReason(reason);
-        auditService.log(adminId, id, "ORGANIZER_REJECTED", previous, UserStatus.REJECTED, reason, ipAddress);
+        auditService.log(adminId, id, "ORGANIZER_REJECTED", previous, user.getStatus(), reason, ipAddress);
     }
 
     @Transactional
@@ -118,7 +127,11 @@ public class AdminService {
     @Transactional
     public void reactivate(UUID adminId, UUID id, String ipAddress) {
         User user = load(id);
-        requireStatus(user, UserStatus.SUSPENDED);
+        if (user.getStatus() != UserStatus.SUSPENDED && 
+            user.getStatus() != UserStatus.BANNED && 
+            user.getStatus() != UserStatus.DISABLED) {
+            throw new ApiException(HttpStatus.CONFLICT, "WRONG_STATUS", "User is not suspended, banned, or disabled");
+        }
         UserStatus previous = user.getStatus();
         user.setStatus(UserStatus.ACTIVE);
         auditService.log(adminId, id, "USER_REACTIVATED", previous, UserStatus.ACTIVE, null, ipAddress);

@@ -213,8 +213,12 @@ public class AuthService {
                     token.setUser(user);
                     token.setTokenHash(TokenHashUtil.sha256(raw));
                     token.setExpiresAt(Instant.now().plusSeconds(1200));
-                    passwordResetTokenRepository.save(token);
-                    emailService.sendPasswordResetEmail(user.getEmail(), raw);
+                    try {
+                        emailService.sendPasswordResetEmail(user.getEmail(), raw);
+                    } catch (Exception e) {
+                        System.err.println("Failed to send password reset email: " + e.getMessage());
+                        System.err.println("Password reset raw token (for dev): " + raw);
+                    }
                 });
     }
 

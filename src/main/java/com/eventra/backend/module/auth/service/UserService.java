@@ -56,8 +56,6 @@ public class UserService {
         if (user.getRole() == UserRole.ORGANIZER) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "ALREADY_ORGANIZER", "User is already an organizer");
         }
-        user.setRole(UserRole.ORGANIZER);
-        user.setStatus(UserStatus.PENDING_ADMIN_APPROVAL);
 
         organizerProfileRepository.findByUserId(userId).ifPresentOrElse(
                 profile -> {
