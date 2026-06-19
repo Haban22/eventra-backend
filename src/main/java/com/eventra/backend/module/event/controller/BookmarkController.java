@@ -5,6 +5,7 @@ import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.event.dto.response.EventSummaryResponse;
 import com.eventra.backend.module.event.service.BookmarkService;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
+@PreAuthorize("hasRole('ATTENDEE')")
 public class BookmarkController {
 
     private final BookmarkService bookmarkService;

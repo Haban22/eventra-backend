@@ -25,11 +25,11 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         @Query("""
                 SELECT e FROM Event e
                 WHERE e.status = 'PUBLISHED'
-                AND (:categoryId IS NULL OR e.category.id = :categoryId)
-                AND (:city IS NULL OR e.location.city ILIKE %:city%)
-                AND (:keyword IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                AND (:from IS NULL OR e.dateTime >= :from)
-                AND (:to IS NULL OR e.dateTime <= :to)
+                AND (CAST(:categoryId AS uuid) IS NULL OR e.category.id = :categoryId)
+                AND (CAST(:city AS string) IS NULL OR e.location.city ILIKE %:city%)
+                AND (CAST(:keyword AS string) IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                AND (CAST(:from AS timestamp) IS NULL OR e.dateTime >= :from)
+                AND (CAST(:to AS timestamp) IS NULL OR e.dateTime <= :to)
                 """)
         Page<Event> searchEvents(
                 @Param("categoryId") UUID categoryId,

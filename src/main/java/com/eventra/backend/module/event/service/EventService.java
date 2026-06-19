@@ -42,6 +42,7 @@ public class EventService {
 
     @Transactional
     public EventResponse createEvent(UUID organizerId, EventRequest request) {
+        validateEventLocation(request);
         var category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
                         "CATEGORY_NOT_FOUND", "Category not found"));
@@ -83,6 +84,7 @@ public class EventService {
 
     @Transactional
     public EventResponse updateEvent(UUID organizerId, UUID eventId, EventRequest request) {
+        validateEventLocation(request);
         Event event = findEventOrThrow(eventId);
         assertOwner(event, organizerId);
         assertEditable(event);
@@ -136,7 +138,13 @@ public class EventService {
         copy.setOrganizerId(organizerId);
         copy.setTitle(original.getTitle() + " (Copy)");
         copy.setDescription(original.getDescription());
-        copy.setDateTime(original.getDateTime());
+        
+        java.time.Instant copyDateTime = original.getDateTime();
+        if (copyDateTime.isBefore(java.time.Instant.now())) {
+            copyDateTime = java.time.Instant.now().plus(java.time.Duration.ofDays(7));
+        }
+        copy.setDateTime(copyDateTime);
+        
         copy.setLocation(original.getLocation());
         copy.setVenueId(original.getVenueId());
         copy.setCategory(original.getCategory());
@@ -213,6 +221,19 @@ public class EventService {
                 event.getStatus() == EventStatus.CANCELLED) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                     "EVENT_NOT_EDITABLE", "Event cannot be edited in its current status");
+        }
+    }
+
+    private void validateEventLocation(EventRequest request) {
+        if (request.isOnline()) {
+            if (request.onlineUrl() == null || request.onlineUrl().isBlank()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ONLINE_URL", "Online URL is required for online events");
+            }
+        } else {
+            if (request.locationAddress() == null || request.locationAddress().isBlank() ||
+                request.locationCity() == null || request.locationCity().isBlank()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PHYSICAL_LOCATION", "Physical location city and address are required for in-person events");
+            }
         }
     }
 }

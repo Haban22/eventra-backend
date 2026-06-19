@@ -1,8 +1,16 @@
 package com.eventra.backend.module.analytics.entity;
-import jakarta.persistence.Entity;
-import lombok.Data;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.UUID;
+
 @Entity
-@Data
+@Getter
+@Setter
+@Table(name = "event_analytics")
 public class EventAnalytics {
-    // TODO: implement
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 }
