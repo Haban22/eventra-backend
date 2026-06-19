@@ -1,10 +1,17 @@
 package com.eventra.backend.module.auth.controller;
 
+
 import com.eventra.backend.module.auth.dto.request.AdminReasonRequest;
+import com.eventra.backend.module.auth.dto.request.SuspendUserRequest;
 import com.eventra.backend.module.auth.dto.response.*;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.auth.service.AdminService;
+import com.eventra.backend.module.auth.dto.request.SuspendUserRequest;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -59,6 +66,35 @@ public class AdminController {
     public MessageResponse reactivate(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID id, HttpServletRequest request) {
         adminService.reactivate(principal.userId(), id, clientIp(request));
         return new MessageResponse("User reactivated");
+    }
+
+    @PatchMapping("/users/{id}/suspend-detailed")
+    public MessageResponse suspendDetailed(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody SuspendUserRequest body,
+            HttpServletRequest request) {
+        adminService.suspendWithDetails(principal.userId(), id,
+                body.reason(), body.suspendedUntil(), clientIp(request));
+        return new MessageResponse("User suspended");
+    }
+
+    @PatchMapping("/organizers/{id}/verify")
+    public MessageResponse verifyOrganizer(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID id,
+            HttpServletRequest request) {
+        adminService.verifyOrganizer(principal.userId(), id, clientIp(request));
+        return new MessageResponse("Organizer verified");
+    }
+
+    @PatchMapping("/users/{id}/force-password-reset")
+    public MessageResponse forcePasswordReset(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID id,
+            HttpServletRequest request) {
+        adminService.forcePasswordReset(principal.userId(), id, clientIp(request));
+        return new MessageResponse("Password reset forced");
     }
 
     @PatchMapping("/users/{id}/disable")

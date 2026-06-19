@@ -73,7 +73,8 @@ class AuthServiceTest {
     void registerAttendee_Success() {
         // Given
         AttendeeRegistrationRequest request = new AttendeeRegistrationRequest(
-                "John Doe", "john@example.com", "Password123", "+1234567890"
+                "John Doe", "john@example.com", "Password123", "+1234567890",
+                "New York", java.util.List.of("Sports", "Tech", "Music")
         );
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");
@@ -100,7 +101,8 @@ class AuthServiceTest {
     void registerAttendee_EmailAlreadyExists_ThrowsConflict() {
         // Given
         AttendeeRegistrationRequest request = new AttendeeRegistrationRequest(
-                "John Doe", "john@example.com", "Password123", "+1234567890"
+                "John Doe", "john@example.com", "Password123", "+1234567890",
+                "New York", java.util.List.of("Sports", "Tech", "Music")
         );
         when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
 
@@ -115,7 +117,9 @@ class AuthServiceTest {
         // Given
         OrganizerRegistrationRequest request = new OrganizerRegistrationRequest(
                 "Jane Org", "jane@org.com", "Password123", "+1234567890",
-                "Org Name", "Org Desc", "https://org.com", null, null
+                "San Francisco", "Org Name", "Org Desc", "https://org.com", 
+                "https://social.com", "https://profile.com", "5 years",
+                java.util.List.of("Tech", "Conferences")
         );
         when(userRepository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashedPassword");

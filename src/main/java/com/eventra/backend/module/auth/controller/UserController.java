@@ -1,5 +1,6 @@
 package com.eventra.backend.module.auth.controller;
 
+import com.eventra.backend.module.auth.dto.request.OrganizerUpgradeRequest;
 import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
 import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
 import com.eventra.backend.module.auth.dto.response.MessageResponse;
@@ -28,6 +29,15 @@ public class UserController {
     @PatchMapping("/me")
     public UserResponse updateMe(@AuthenticationPrincipal AuthPrincipal principal, @Valid @RequestBody UpdateMeRequest request) {
         return userService.updateMe(principal.userId(), request);
+    }
+
+    @PostMapping("/me/request-organizer")
+    public MessageResponse requestOrganizerUpgrade(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestBody(required = false) OrganizerUpgradeRequest request) {
+        userService.requestOrganizerUpgrade(principal.userId(),
+                request != null ? request.reason() : null);
+        return new MessageResponse("Organizer upgrade request submitted");
     }
 
     @PatchMapping("/me/password")

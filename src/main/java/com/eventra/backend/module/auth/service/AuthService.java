@@ -63,22 +63,31 @@ public class AuthService {
 
     @Transactional
     public void registerAttendee(AttendeeRegistrationRequest request) {
-        User user = buildUser(request.fullName(), request.email(), request.password(), request.phone(), UserRole.ATTENDEE);
+        User user = buildUser(request.fullName(), request.email(),
+                request.password(), request.phone(), UserRole.ATTENDEE);
+        if (request.city() != null) user.setCity(request.city());
+        if (request.interests() != null) user.setInterests(request.interests());
         userRepository.save(user);
         createVerificationTokenAndSend(user);
     }
 
     @Transactional
     public void registerOrganizer(OrganizerRegistrationRequest request) {
-        User user = buildUser(request.fullName(), request.email(), request.password(), request.phone(), UserRole.ORGANIZER);
+        User user = buildUser(request.fullName(), request.email(),
+                request.password(), request.phone(), UserRole.ORGANIZER);
         user.setProfilePictureUrl(request.profilePictureUrl());
+        if (request.city() != null) user.setCity(request.city());
         userRepository.save(user);
         OrganizerProfile profile = new OrganizerProfile();
         profile.setUser(user);
-        profile.setOrganizationName(request.organizationName());
-        profile.setOrganizationDescription(request.organizationDescription());
+        profile.setOrganizationName(
+                request.organizationName() != null ? request.organizationName() : "");
+        profile.setOrganizationDescription(
+                request.organizationDescription() != null ? request.organizationDescription() : "");
         profile.setWebsiteUrl(blankToNull(request.websiteUrl()));
         profile.setSocialLink(blankToNull(request.socialLink()));
+        profile.setExperience(request.experience());
+        if (request.eventTypes() != null) profile.setEventTypes(request.eventTypes());
         organizerProfileRepository.save(profile);
         createVerificationTokenAndSend(user);
     }

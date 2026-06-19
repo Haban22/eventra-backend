@@ -13,9 +13,10 @@ public record OrganizerSummaryResponse(
         String email,
         @JsonProperty("organization_name") String organizationName,
         @JsonProperty("created_at") Instant createdAt,
-        String status
+        String status,
+        @JsonProperty("is_verified") boolean isVerified
 ) {
     public static OrganizerSummaryResponse from(User user, OrganizerProfile profile) {
-        return new OrganizerSummaryResponse(user.getId(), user.getFullName(), user.getEmail(), profile.getOrganizationName(), user.getCreatedAt(), user.getStatus().name());
+        return new OrganizerSummaryResponse(user.getId(), user.getFullName(), user.getEmail(), profile.getOrganizationName(), user.getCreatedAt(), user.getStatus().name(), profile.isVerified());
     }
 }
