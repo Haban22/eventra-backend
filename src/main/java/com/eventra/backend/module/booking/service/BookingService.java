@@ -66,7 +66,7 @@ public class BookingService {
         }
 
         // Get and reserve ticket
-        Ticket ticket = ticketRepository.findById(request.ticketId())
+        Ticket ticket = ticketRepository.findByIdForUpdate(request.ticketId())
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
                         "TICKET_NOT_FOUND", "Ticket not found"));
 
@@ -161,7 +161,7 @@ public class BookingService {
         for (Booking booking : expired) {
             booking.cancel();
             booking.getItems().forEach(item ->
-                    ticketRepository.findById(item.getTicketId()).ifPresent(ticket -> {
+                    ticketRepository.findByIdForUpdate(item.getTicketId()).ifPresent(ticket -> {
                         ticket.release(item.getQuantity());
                         ticketRepository.save(ticket);
                     })

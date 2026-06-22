@@ -75,7 +75,7 @@ class BookingServiceTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(bookingRepository.existsByAttendeeIdAndEventIdAndStatus(attendeeId, eventId, BookingStatus.CONFIRMED)).thenReturn(false);
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findByIdForUpdate(ticketId)).thenReturn(Optional.of(ticket));
         when(ticketRepository.save(any(Ticket.class))).thenReturn(ticket);
         when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> {
             Booking b = invocation.getArgument(0);
@@ -183,7 +183,7 @@ class BookingServiceTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(bookingRepository.existsByAttendeeIdAndEventIdAndStatus(attendeeId, eventId, BookingStatus.CONFIRMED)).thenReturn(false);
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.empty());
+        when(ticketRepository.findByIdForUpdate(ticketId)).thenReturn(Optional.empty());
 
         ApiException exception = assertThrows(ApiException.class, () ->
                 bookingService.createBooking(attendeeId, request));
@@ -214,7 +214,7 @@ class BookingServiceTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(bookingRepository.existsByAttendeeIdAndEventIdAndStatus(attendeeId, eventId, BookingStatus.CONFIRMED)).thenReturn(false);
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findByIdForUpdate(ticketId)).thenReturn(Optional.of(ticket));
 
         ApiException exception = assertThrows(ApiException.class, () ->
                 bookingService.createBooking(attendeeId, request));
@@ -369,7 +369,7 @@ class BookingServiceTest {
         ticket.setSold(5);
 
         when(bookingRepository.findExpiredHolds(any(Instant.class))).thenReturn(List.of(booking));
-        when(ticketRepository.findById(ticketId)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findByIdForUpdate(ticketId)).thenReturn(Optional.of(ticket));
 
         bookingService.releaseExpiredHolds();
 

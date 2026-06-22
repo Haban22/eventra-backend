@@ -27,10 +27,14 @@ public class TicketService {
     }
 
     @Transactional
-    public TicketResponse createTicket(UUID eventId, TicketRequest request) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND,
-                    "EVENT_NOT_FOUND", "Event not found");
+    public TicketResponse createTicket(UUID organizerId, UUID eventId, TicketRequest request) {
+        var event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "EVENT_NOT_FOUND", "Event not found"));
+
+        if (!event.getOrganizerId().equals(organizerId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN,
+                    "NOT_EVENT_OWNER", "You do not own this event");
         }
 
         Ticket ticket = new Ticket();

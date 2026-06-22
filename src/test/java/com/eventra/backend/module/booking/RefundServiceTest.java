@@ -101,7 +101,7 @@ class RefundServiceTest {
         assertEquals(PaymentStatus.REFUNDED, payment.getStatus());
         assertEquals(3, ticket.getSold());
 
-        verify(stripeGateway, times(1)).refund("txn_123", BigDecimal.valueOf(100.0));
+        verify(stripeGateway, times(1)).refund("txn_123", new BigDecimal("100.00"));
         verify(bookingRepository, times(1)).save(booking);
         verify(paymentRepository, times(1)).save(payment);
         verify(ticketRepository, times(1)).save(ticket);
@@ -156,7 +156,7 @@ class RefundServiceTest {
         assertEquals(0, booking.getTotalAmount().getAmount().compareTo(BigDecimal.valueOf(50))); // Booking amount updated
         assertEquals(4, ticket.getSold()); // One ticket released
 
-        verify(stripeGateway, times(1)).refund("txn_123", BigDecimal.valueOf(50.0));
+        verify(stripeGateway, times(1)).refund("txn_123", new BigDecimal("50.00"));
         verify(bookingRepository, times(1)).save(booking);
         verify(paymentRepository, times(1)).save(payment);
         verify(ticketRepository, times(1)).save(ticket);

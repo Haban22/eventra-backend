@@ -66,9 +66,9 @@ public class RefundService {
                     "INVALID_REFUND_QUANTITY", "Cannot refund " + request.quantity() + " tickets for booking with " + totalQuantity + " tickets");
         }
 
-        double refundRatio = (double) request.quantity() / totalQuantity;
         java.math.BigDecimal refundAmount = booking.getTotalAmount().getAmount()
-                .multiply(java.math.BigDecimal.valueOf(refundRatio));
+                .multiply(java.math.BigDecimal.valueOf(request.quantity()))
+                .divide(java.math.BigDecimal.valueOf(totalQuantity), 2, java.math.RoundingMode.HALF_UP);
 
         // Process refund via gateway
         stripeGateway.refund(payment.getTransactionId(), refundAmount);
