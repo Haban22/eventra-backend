@@ -31,6 +31,10 @@ public class SecurityConfig {
             "/api/auth/reset-password",
             "/api/auth/google",
             "/api/auth/refresh",
+            "/api/gamification/**",
+            "/api/communities/**",
+            "/api/admin/community/**",
+            "/actuator/**",
             "/v3/api-docs/**",
             "/swagger-ui/**"
     };
