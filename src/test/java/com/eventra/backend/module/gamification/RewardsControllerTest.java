@@ -1,6 +1,6 @@
 package com.eventra.backend.module.gamification;
 
-import com.eventra.backend.module.auth.config.SecurityConfig;
+import com.eventra.backend.module.auth.security.JwtUtil;
 import com.eventra.backend.module.gamification.controller.RewardsController;
 import com.eventra.backend.module.gamification.dto.*;
 import com.eventra.backend.module.gamification.enums.GamificationAction;
@@ -16,8 +16,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
@@ -30,12 +34,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(RewardsController.class)
-@Import(SecurityConfig.class)
+@Import(RewardsControllerTest.TestSecurityConfig.class)
 class RewardsControllerTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            return http.build();
+        }
+    }
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
+    @MockBean private JwtUtil jwtUtil;
     @MockBean private RewardsService rewardsService;
     @MockBean private BadgeService badgeService;
     @MockBean private LeaderboardService leaderboardService;

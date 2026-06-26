@@ -1,6 +1,6 @@
 package com.eventra.backend.module.community;
 
-import com.eventra.backend.module.auth.config.SecurityConfig;
+import com.eventra.backend.module.auth.security.JwtUtil;
 import com.eventra.backend.module.community.controller.AdminCommunityController;
 import com.eventra.backend.module.community.controller.CommunityController;
 import com.eventra.backend.module.community.controller.DiscussionController;
@@ -15,8 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -29,12 +33,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({CommunityController.class, DiscussionController.class, AdminCommunityController.class})
-@Import(SecurityConfig.class)
+@Import(CommunityControllerTest.TestSecurityConfig.class)
 class CommunityControllerTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            return http.build();
+        }
+    }
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
 
+    @MockBean private JwtUtil jwtUtil;
     @MockBean private CommunityService communityService;
     @MockBean private DiscussionService discussionService;
     @MockBean private ModerationService moderationService;
