@@ -1,6 +1,16 @@
 package com.eventra.backend.module.booking.valueobject;
-import lombok.Data;
-@Data
+
+import jakarta.persistence.Embeddable;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.UUID;
+
+@Embeddable
+@Getter
+@Setter
 public class BookingItem {
-    // TODO: implement
+
+    private UUID ticketId;
+    private int quantity;
 }
