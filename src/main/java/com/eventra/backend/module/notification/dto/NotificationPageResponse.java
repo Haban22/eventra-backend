@@ -18,11 +18,24 @@ import java.util.List;
 public class NotificationPageResponse {
 
     private List<NotificationResponse> content;
+
+    /** Zero-based current page index. */
     private int page;
+
+    /** Requested page size. */
     private int size;
+
+    /** Total number of notifications across all pages. */
     private long totalElements;
+
+    /** Total number of pages. */
     private int totalPages;
+
+    /** Whether this is the last page. */
     private boolean last;
+
+    /** Whether this is the first page. */
+    private boolean first;
 
     /**
      * Builds a paginated response from a Spring Data {@link Page} of notifications.
@@ -38,6 +51,7 @@ public class NotificationPageResponse {
                 .totalElements(page.getTotalElements())
                 .totalPages(page.getTotalPages())
                 .last(page.isLast())
+                .first(page.isFirst())
                 .build();
     }
 }

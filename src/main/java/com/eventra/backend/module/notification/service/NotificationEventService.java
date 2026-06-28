@@ -11,6 +11,10 @@ import java.util.List;
 
 /**
  * Handles domain-event-driven notification creation across booking, event, and community flows.
+ *
+ * <p>Fan-out operations (e.g., notifying all event attendees) use
+ * {@link NotificationService#createBulkNotifications} to issue a single batch INSERT
+ * instead of N individual INSERTs.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -32,7 +36,9 @@ public class NotificationEventService {
                 .userId(userId)
                 .type(NotificationType.BOOKING_CONFIRMED)
                 .title("Booking Confirmed")
-                .message(String.format("Your booking for \"%s\" has been confirmed. Booking ID: %d.", eventTitle, bookingId))
+                .message(String.format(
+                        "Your booking for \"%s\" has been confirmed. Booking ID: %d.",
+                        eventTitle, bookingId))
                 .build());
     }
 
@@ -49,25 +55,39 @@ public class NotificationEventService {
                 .userId(userId)
                 .type(NotificationType.BOOKING_CANCELLED)
                 .title("Booking Cancelled")
-                .message(String.format("Your booking for \"%s\" has been cancelled. Booking ID: %d.", eventTitle, bookingId))
+                .message(String.format(
+                        "Your booking for \"%s\" has been cancelled. Booking ID: %d.",
+                        eventTitle, bookingId))
                 .build());
     }
 
     /**
      * Notifies all affected users when an admin updates an event.
+     * Uses batch insert to avoid N individual database round-trips.
      *
      * @param attendeeUserIds IDs of users with bookings for the event
      * @param eventTitle      updated event title
      * @param eventId         updated event ID
      */
     public void onEventUpdated(List<Long> attendeeUserIds, String eventTitle, Long eventId) {
-        attendeeUserIds.forEach(userId -> notificationService.createNotification(NotificationRequest.builder()
-                .userId(userId)
-                .type(NotificationType.EVENT_UPDATED)
-                .title("Event Updated")
-                .message(String.format("The event \"%s\" has been updated. Please review the latest details. Event ID: %d.",
-                        eventTitle, eventId))
-                .build()));
+        if (attendeeUserIds == null || attendeeUserIds.isEmpty()) {
+            return;
+        }
+
+        String message = String.format(
+                "The event \"%s\" has been updated. Please review the latest details. Event ID: %d.",
+                eventTitle, eventId);
+
+        List<NotificationRequest> requests = attendeeUserIds.stream()
+                .map(userId -> NotificationRequest.builder()
+                        .userId(userId)
+                        .type(NotificationType.EVENT_UPDATED)
+                        .title("Event Updated")
+                        .message(message)
+                        .build())
+                .toList();
+
+        notificationService.createBulkNotifications(requests);
     }
 
     /**
@@ -83,24 +103,35 @@ public class NotificationEventService {
                 .userId(userId)
                 .type(NotificationType.COMMUNITY_UPDATE)
                 .title("Welcome to the Community")
-                .message(String.format("You have successfully joined \"%s\". Community ID: %d.", communityName, communityId))
+                .message(String.format(
+                        "You have successfully joined \"%s\". Community ID: %d.",
+                        communityName, communityId))
                 .build());
     }
 
     /**
      * Sends a community announcement notification to all community members.
+     * Uses batch insert to avoid N individual database round-trips.
      *
      * @param memberUserIds IDs of community members to notify
      * @param communityName name of the community
      * @param announcement  announcement message from admin
      */
     public void onCommunityAnnouncement(List<Long> memberUserIds, String communityName, String announcement) {
-        memberUserIds.forEach(userId -> notificationService.createNotification(NotificationRequest.builder()
-                .userId(userId)
-                .type(NotificationType.COMMUNITY_UPDATE)
-                .title(String.format("Announcement: %s", communityName))
-                .message(announcement)
-                .build()));
+        if (memberUserIds == null || memberUserIds.isEmpty()) {
+            return;
+        }
+
+        List<NotificationRequest> requests = memberUserIds.stream()
+                .map(userId -> NotificationRequest.builder()
+                        .userId(userId)
+                        .type(NotificationType.COMMUNITY_UPDATE)
+                        .title(String.format("Announcement: %s", communityName))
+                        .message(announcement)
+                        .build())
+                .toList();
+
+        notificationService.createBulkNotifications(requests);
     }
 
     /**
@@ -116,7 +147,9 @@ public class NotificationEventService {
                 .userId(userId)
                 .type(NotificationType.COMMUNITY_INVITATION)
                 .title("Community Invitation")
-                .message(String.format("You have been invited to join \"%s\". Community ID: %d.", communityName, communityId))
+                .message(String.format(
+                        "You have been invited to join \"%s\". Community ID: %d.",
+                        communityName, communityId))
                 .build());
     }
 }
