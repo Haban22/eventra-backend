@@ -32,3 +32,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Python (ai-service) ###
+ai-service/.venv/
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.pytest_cache/
+ai-service/*.egg-info/
