@@ -16,8 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,17 +31,20 @@ public class ModerationService {
     private final DiscussionReplyRepository replyRepository;
 
     public ModerationStatsResponse getFlaggedContent() {
-        List<FlaggedContentResponse> items = flaggedContentRepository.findAllByOrderByCreatedAtDesc()
-                .stream()
+        List<FlaggedContent> allFlags = flaggedContentRepository.findAllByOrderByCreatedAtDesc();
+        
+        List<FlaggedContentResponse> items = allFlags.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
 
         long pending = flaggedContentRepository.countByStatus(FlagStatus.PENDING);
         long total = flaggedContentRepository.count();
-        long resolvedToday = flaggedContentRepository.findAllByOrderByCreatedAtDesc().stream()
+        
+        LocalDate today = LocalDate.now();
+        long resolvedToday = allFlags.stream()
                 .filter(f -> f.getStatus() != FlagStatus.PENDING
                         && f.getResolvedAt() != null
-                        && f.getResolvedAt().toLocalDate().equals(LocalDateTime.now().toLocalDate()))
+                        && f.getResolvedAt().toLocalDate().equals(today))
                 .count();
 
         return new ModerationStatsResponse(pending, resolvedToday, total, items);
@@ -66,7 +71,7 @@ public class ModerationService {
     }
 
     @Transactional
-    public FlaggedContentResponse approveContent(Long flagId, Long moderatorId) {
+    public FlaggedContentResponse approveContent(Long flagId, UUID moderatorId) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.APPROVED);
         f.setResolvedByUserId(moderatorId);
@@ -75,7 +80,7 @@ public class ModerationService {
     }
 
     @Transactional
-    public FlaggedContentResponse removeContent(Long flagId, Long moderatorId) {
+    public FlaggedContentResponse removeContent(Long flagId, UUID moderatorId) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.REMOVED);
         f.setResolvedByUserId(moderatorId);
@@ -95,7 +100,7 @@ public class ModerationService {
     }
 
     @Transactional
-    public FlaggedContentResponse warnUser(Long flagId, Long moderatorId) {
+    public FlaggedContentResponse warnUser(Long flagId, UUID moderatorId) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.WARNED);
         f.setResolvedByUserId(moderatorId);

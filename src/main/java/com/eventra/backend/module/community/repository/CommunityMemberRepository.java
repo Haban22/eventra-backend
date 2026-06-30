@@ -6,12 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface CommunityMemberRepository extends JpaRepository<CommunityMember, Long> {
 
-    boolean existsByCommunityIdAndUserId(Long communityId, Long userId);
+    boolean existsByCommunityIdAndUserId(Long communityId, UUID userId);
 
-    Optional<CommunityMember> findByCommunityIdAndUserId(Long communityId, Long userId);
+    Optional<CommunityMember> findByCommunityIdAndUserId(Long communityId, UUID userId);
 
     List<CommunityMember> findByCommunityIdOrderByJoinedAtAsc(Long communityId);
 
@@ -19,5 +20,5 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
 
     long countByCommunityId(Long communityId);
 
-    List<CommunityMember> findByUserId(Long userId);
+    List<CommunityMember> findByUserId(UUID userId);
 }

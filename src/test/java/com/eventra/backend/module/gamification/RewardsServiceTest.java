@@ -25,10 +25,10 @@ import org.mockito.quality.Strictness;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,26 +43,30 @@ class RewardsServiceTest {
 
     private RewardsProfile profile;
 
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+    private static final UUID OTHER_USER_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID UNKNOWN_USER_ID = UUID.fromString("99999999-9999-9999-9999-999999999999");
+
     @BeforeEach
     void setUp() {
-        profile = newProfile(1L, "Alice");
+        profile = newProfile(TEST_USER_ID, "Alice");
         when(rewardsRepository.save(any(RewardsProfile.class))).thenAnswer(inv -> inv.getArgument(0));
         when(pointsTransactionRepository.save(any(PointsTransaction.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(badgeService.checkAndAwardBadges(anyLong())).thenReturn(Collections.emptyList());
-        when(badgeService.getUserBadgeEntities(anyLong())).thenReturn(Collections.emptyList());
+        when(badgeService.checkAndAwardBadges(any(UUID.class))).thenReturn(Collections.emptyList());
+        when(badgeService.getUserBadgeEntities(any(UUID.class))).thenReturn(Collections.emptyList());
         when(badgeService.getAllBadgeEntities()).thenReturn(Collections.emptyList());
-        when(pointsTransactionRepository.findByUserIdOrderByCreatedAtDesc(anyLong(), any())).thenReturn(Collections.emptyList());
+        when(pointsTransactionRepository.findByUserIdOrderByCreatedAtDesc(any(UUID.class), any())).thenReturn(Collections.emptyList());
     }
 
     // ─── awardAction ──────────────────────────────────────────────────────────
 
     @Test
     void awardAction_createsNewProfileAndAwardsXp() {
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.empty());
         when(pointsTransactionRepository.countByUserIdAndReasonAndReferenceId(any(), any(), any())).thenReturn(0L);
 
         AwardActionRequest req = new AwardActionRequest();
-        req.setUserId(1L);
+        req.setUserId(TEST_USER_ID);
         req.setAction(GamificationAction.RSVP_EVENT);
         req.setDisplayName("Alice");
 
@@ -77,11 +81,11 @@ class RewardsServiceTest {
 
     @Test
     void awardAction_skipsDuplicateReferenceId() {
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
-        when(pointsTransactionRepository.countByUserIdAndReasonAndReferenceId(1L, "RSVP_EVENT", "event-42")).thenReturn(1L);
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
+        when(pointsTransactionRepository.countByUserIdAndReasonAndReferenceId(TEST_USER_ID, "RSVP_EVENT", "event-42")).thenReturn(1L);
 
         AwardActionRequest req = new AwardActionRequest();
-        req.setUserId(1L);
+        req.setUserId(TEST_USER_ID);
         req.setAction(GamificationAction.RSVP_EVENT);
         req.setReferenceId("event-42");
 
@@ -94,11 +98,11 @@ class RewardsServiceTest {
     @Test
     void awardAction_awardsCorrectXpForRsvp() {
         profile.setLastActivityDate(java.time.LocalDate.of(2020, 1, 1)); // old date → "new day" triggers streak bonus
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
         when(pointsTransactionRepository.countByUserIdAndReasonAndReferenceId(any(), any(), any())).thenReturn(0L);
 
         AwardActionRequest req = new AwardActionRequest();
-        req.setUserId(1L);
+        req.setUserId(TEST_USER_ID);
         req.setAction(GamificationAction.RSVP_EVENT);
         req.setReferenceId("event-1");
 
@@ -114,11 +118,11 @@ class RewardsServiceTest {
         profile.setLastActivityDate(java.time.LocalDate.now()); // already active today
         profile.setTotalXP(10L);
         profile.setPointsBalance(5L);
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
         when(pointsTransactionRepository.countByUserIdAndReasonAndReferenceId(any(), any(), any())).thenReturn(0L);
 
         AwardActionRequest req = new AwardActionRequest();
-        req.setUserId(1L);
+        req.setUserId(TEST_USER_ID);
         req.setAction(GamificationAction.RSVP_EVENT);
         req.setReferenceId("event-2");
 
@@ -133,9 +137,9 @@ class RewardsServiceTest {
     @Test
     void redeemPoints_deductsBalanceAndCreatesSpentTransaction() {
         profile.setPointsBalance(200L);
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
 
-        PointsTransactionResponse res = rewardsService.redeemPoints(1L, 50L, "Free ticket");
+        PointsTransactionResponse res = rewardsService.redeemPoints(TEST_USER_ID, 50L, "Free ticket");
 
         assertEquals(150L, profile.getPointsBalance());
         assertEquals(50L, profile.getTotalPointsRedeemed());
@@ -145,56 +149,56 @@ class RewardsServiceTest {
     @Test
     void redeemPoints_throwsValidationExceptionWhenInsufficientBalance() {
         profile.setPointsBalance(30L);
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
 
         assertThrows(ValidationException.class,
-                () -> rewardsService.redeemPoints(1L, 50L, "Too expensive"));
+                () -> rewardsService.redeemPoints(TEST_USER_ID, 50L, "Too expensive"));
     }
 
     @Test
     void redeemPoints_throwsValidationExceptionWhenCostIsZero() {
         assertThrows(ValidationException.class,
-                () -> rewardsService.redeemPoints(1L, 0L, "Free?"));
+                () -> rewardsService.redeemPoints(TEST_USER_ID, 0L, "Free?"));
     }
 
     // ─── getProfile ───────────────────────────────────────────────────────────
 
     @Test
     void getProfile_returnsResponseForExistingUser() {
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
 
-        RewardsProfileResponse res = rewardsService.getProfile(1L);
+        RewardsProfileResponse res = rewardsService.getProfile(TEST_USER_ID);
 
         assertNotNull(res);
-        assertEquals(1L, res.getUserId());
+        assertEquals(TEST_USER_ID, res.getUserId());
         assertEquals("Alice", res.getDisplayName());
     }
 
     @Test
     void getProfile_throwsResourceNotFoundForUnknownUser() {
-        when(rewardsRepository.findByUserId(99L)).thenReturn(Optional.empty());
+        when(rewardsRepository.findByUserId(UNKNOWN_USER_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> rewardsService.getProfile(99L));
+        assertThrows(ResourceNotFoundException.class, () -> rewardsService.getProfile(UNKNOWN_USER_ID));
     }
 
     // ─── getOrCreateProfile ───────────────────────────────────────────────────
 
     @Test
     void getOrCreateProfile_createsProfileWhenAbsent() {
-        when(rewardsRepository.findByUserId(5L)).thenReturn(Optional.empty());
+        when(rewardsRepository.findByUserId(OTHER_USER_ID)).thenReturn(Optional.empty());
 
-        RewardsProfile result = rewardsService.getOrCreateProfile(5L, "Bob", null);
+        RewardsProfile result = rewardsService.getOrCreateProfile(OTHER_USER_ID, "Bob", null);
 
-        assertEquals(5L, result.getUserId());
+        assertEquals(OTHER_USER_ID, result.getUserId());
         assertEquals("Bob", result.getDisplayName());
         verify(rewardsRepository).save(any(RewardsProfile.class));
     }
 
     @Test
     void getOrCreateProfile_returnsExistingProfile() {
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
 
-        RewardsProfile result = rewardsService.getOrCreateProfile(1L, "Other Name", null);
+        RewardsProfile result = rewardsService.getOrCreateProfile(TEST_USER_ID, "Other Name", null);
 
         assertEquals(profile, result);
         verify(rewardsRepository, never()).save(any());
@@ -202,9 +206,9 @@ class RewardsServiceTest {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private static RewardsProfile newProfile(Long userId, String displayName) {
+    private static RewardsProfile newProfile(UUID userId, String displayName) {
         RewardsProfile p = new RewardsProfile();
-        p.setId(userId);
+        p.setId(1L);
         p.setUserId(userId);
         p.setDisplayName(displayName);
         p.setPointsBalance(0L);

@@ -37,7 +37,7 @@ public class RewardsService {
     public RewardsProfileResponse awardAction(AwardActionRequest req) {
         RewardsProfile profile = getOrCreateProfile(
                 req.getUserId(),
-                req.getDisplayName() != null ? req.getDisplayName() : "User " + req.getUserId(),
+                req.getDisplayName() != null ? req.getDisplayName() : "User " + req.getUserId().toString(),
                 req.getAvatarUrl());
 
         GamificationAction action = req.getAction();
@@ -102,7 +102,7 @@ public class RewardsService {
 
     /** Deducts points from the user's balance (e.g. reward redemption). */
     @Transactional
-    public PointsTransactionResponse redeemPoints(Long userId, long cost, String description) {
+    public PointsTransactionResponse redeemPoints(UUID userId, long cost, String description) {
         if (cost <= 0) throw new ValidationException("Redemption cost must be positive");
 
         RewardsProfile profile = rewardsRepository.findByUserId(userId)
@@ -121,13 +121,13 @@ public class RewardsService {
         return toTransactionResponse(tx);
     }
 
-    public RewardsProfileResponse getProfile(Long userId) {
+    public RewardsProfileResponse getProfile(UUID userId) {
         RewardsProfile profile = rewardsRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rewards profile not found for user: " + userId));
         return buildProfileResponse(profile);
     }
 
-    public List<PointsTransactionResponse> getTransactionHistory(Long userId, int page, int size) {
+    public List<PointsTransactionResponse> getTransactionHistory(UUID userId, int page, int size) {
         rewardsRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rewards profile not found for user: " + userId));
         return pointsTransactionRepository
@@ -137,11 +137,11 @@ public class RewardsService {
                 .collect(Collectors.toList());
     }
 
-    public RewardsProfile getOrCreateProfile(Long userId, String displayName, String avatarUrl) {
+    public RewardsProfile getOrCreateProfile(UUID userId, String displayName, String avatarUrl) {
         return rewardsRepository.findByUserId(userId).orElseGet(() -> {
             RewardsProfile p = new RewardsProfile();
             p.setUserId(userId);
-            p.setDisplayName(displayName != null ? displayName : "User " + userId);
+            p.setDisplayName(displayName != null ? displayName : "User " + userId.toString());
             p.setAvatarUrl(avatarUrl);
             return rewardsRepository.save(p);
         });

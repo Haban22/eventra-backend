@@ -4,10 +4,12 @@ import com.eventra.backend.module.gamification.enums.GamificationAction;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class AwardActionRequest {
     @NotNull
-    private Long userId;
+    private UUID userId;
 
     @NotNull
     private GamificationAction action;

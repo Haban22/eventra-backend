@@ -26,7 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -55,17 +55,19 @@ class RewardsControllerTest {
     @MockBean private BadgeService badgeService;
     @MockBean private LeaderboardService leaderboardService;
 
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+
     // ─── GET /api/gamification/profile/{userId} ───────────────────────────────
 
     @Test
     void getProfile_returns200WithProfileData() throws Exception {
-        RewardsProfileResponse profile = sampleProfile(1L);
-        when(rewardsService.getProfile(1L)).thenReturn(profile);
+        RewardsProfileResponse profile = sampleProfile(TEST_USER_ID);
+        when(rewardsService.getProfile(TEST_USER_ID)).thenReturn(profile);
 
-        mockMvc.perform(get("/api/gamification/profile/1"))
+        mockMvc.perform(get("/api/gamification/profile/" + TEST_USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.userId").value(1))
+                .andExpect(jsonPath("$.data.userId").value(TEST_USER_ID.toString()))
                 .andExpect(jsonPath("$.data.displayName").value("Alice"))
                 .andExpect(jsonPath("$.data.totalXP").value(350))
                 .andExpect(jsonPath("$.data.level.currentLevel").value(3));
@@ -73,10 +75,11 @@ class RewardsControllerTest {
 
     @Test
     void getProfile_returns404WhenUserNotFound() throws Exception {
-        when(rewardsService.getProfile(99L))
+        UUID randomUserId = UUID.randomUUID();
+        when(rewardsService.getProfile(randomUserId))
                 .thenThrow(new com.eventra.backend.common.exception.ResourceNotFoundException("Not found"));
 
-        mockMvc.perform(get("/api/gamification/profile/99"))
+        mockMvc.perform(get("/api/gamification/profile/" + randomUserId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -86,11 +89,11 @@ class RewardsControllerTest {
     @Test
     void awardAction_returns200WithUpdatedProfile() throws Exception {
         AwardActionRequest req = new AwardActionRequest();
-        req.setUserId(1L);
+        req.setUserId(TEST_USER_ID);
         req.setAction(GamificationAction.RSVP_EVENT);
         req.setReferenceId("event-1");
 
-        RewardsProfileResponse profile = sampleProfile(1L);
+        RewardsProfileResponse profile = sampleProfile(TEST_USER_ID);
         when(rewardsService.awardAction(any(AwardActionRequest.class))).thenReturn(profile);
 
         mockMvc.perform(post("/api/gamification/action")
@@ -98,7 +101,7 @@ class RewardsControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.userId").value(1));
+                .andExpect(jsonPath("$.data.userId").value(TEST_USER_ID.toString()));
     }
 
     @Test
@@ -115,17 +118,21 @@ class RewardsControllerTest {
     void redeemPoints_returns200WithTransaction() throws Exception {
         PointsTransactionResponse tx = new PointsTransactionResponse();
         tx.setId(1L);
-        tx.setUserId(1L);
+        tx.setUserId(TEST_USER_ID);
         tx.setPointsAmount(-50L);
         tx.setType(TransactionType.SPENT);
         tx.setReason("REDEEM_POINTS");
 
-        when(rewardsService.redeemPoints(eq(1L), eq(50L), any())).thenReturn(tx);
+        when(rewardsService.redeemPoints(eq(TEST_USER_ID), eq(50L), any())).thenReturn(tx);
 
-        Map<String, Object> body = Map.of("userId", 1, "cost", 50, "description", "Free ticket");
+        RedeemPointsRequest req = new RedeemPointsRequest();
+        req.setUserId(TEST_USER_ID);
+        req.setCost(50L);
+        req.setDescription("Free ticket");
+
         mockMvc.perform(post("/api/gamification/redeem")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
+                        .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.pointsAmount").value(-50))
@@ -141,9 +148,9 @@ class RewardsControllerTest {
         tx.setXpAmount(10L);
         tx.setReason("RSVP_EVENT");
 
-        when(rewardsService.getTransactionHistory(eq(1L), anyInt(), anyInt())).thenReturn(List.of(tx));
+        when(rewardsService.getTransactionHistory(eq(TEST_USER_ID), anyInt(), anyInt())).thenReturn(List.of(tx));
 
-        mockMvc.perform(get("/api/gamification/transactions/1?page=0&size=10"))
+        mockMvc.perform(get("/api/gamification/transactions/" + TEST_USER_ID + "?page=0&size=10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].reason").value("RSVP_EVENT"))
@@ -174,9 +181,9 @@ class RewardsControllerTest {
         badge.setName("First Attendee");
         badge.setUnlocked(true);
 
-        when(badgeService.getUserBadges(1L)).thenReturn(List.of(badge));
+        when(badgeService.getUserBadges(TEST_USER_ID)).thenReturn(List.of(badge));
 
-        mockMvc.perform(get("/api/gamification/badges/user/1"))
+        mockMvc.perform(get("/api/gamification/badges/user/" + TEST_USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].unlocked").value(true));
     }
@@ -189,7 +196,7 @@ class RewardsControllerTest {
         leaderboard.setType(LeaderboardType.ALL_TIME);
         leaderboard.setTotalUsers(1);
         leaderboard.setEntries(List.of(
-                new LeaderboardEntry(1, 1L, "Alice", null, 350L, 3)
+                new LeaderboardEntry(1, TEST_USER_ID, "Alice", null, 350L, 3)
         ));
 
         when(leaderboardService.getLeaderboard(eq(LeaderboardType.ALL_TIME), anyInt(), any()))
@@ -220,7 +227,7 @@ class RewardsControllerTest {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private static RewardsProfileResponse sampleProfile(Long userId) {
+    private static RewardsProfileResponse sampleProfile(UUID userId) {
         RewardsProfileResponse p = new RewardsProfileResponse();
         p.setUserId(userId);
         p.setDisplayName("Alice");

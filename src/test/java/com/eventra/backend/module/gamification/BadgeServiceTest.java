@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,18 +35,20 @@ class BadgeServiceTest {
     @Mock private RewardsRepository rewardsRepository;
     @InjectMocks private BadgeService badgeService;
 
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+
     // ─── checkAndAwardBadges ──────────────────────────────────────────────────
 
     @Test
     void checkAndAwardBadges_awardsFirstAttendeeBadgeOnFirstRsvp() {
         Badge badge = badge(1L, "First Attendee");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 1L)).thenReturn(false);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "RSVP_EVENT")).thenReturn(1L);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "RSVP_EVENT_EARLY")).thenReturn(0L);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 1L)).thenReturn(false);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "RSVP_EVENT")).thenReturn(1L);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "RSVP_EVENT_EARLY")).thenReturn(0L);
         when(userBadgeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertEquals(1, awarded.size());
         assertEquals("First Attendee", awarded.get(0).getName());
@@ -56,9 +59,9 @@ class BadgeServiceTest {
     void checkAndAwardBadges_doesNotAwardBadgeAlreadyEarned() {
         Badge badge = badge(1L, "First Attendee");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 1L)).thenReturn(true);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 1L)).thenReturn(true);
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertTrue(awarded.isEmpty());
         verify(userBadgeRepository, never()).save(any());
@@ -68,11 +71,11 @@ class BadgeServiceTest {
     void checkAndAwardBadges_awardsEventExplorerAfterFiveAttendances() {
         Badge badge = badge(2L, "Event Explorer");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 2L)).thenReturn(false);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "ATTEND_EVENT")).thenReturn(5L);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 2L)).thenReturn(false);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "ATTEND_EVENT")).thenReturn(5L);
         when(userBadgeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertEquals(1, awarded.size());
         assertEquals("Event Explorer", awarded.get(0).getName());
@@ -82,10 +85,10 @@ class BadgeServiceTest {
     void checkAndAwardBadges_doesNotAwardEventExplorerBeforeFiveAttendances() {
         Badge badge = badge(2L, "Event Explorer");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 2L)).thenReturn(false);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "ATTEND_EVENT")).thenReturn(4L);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 2L)).thenReturn(false);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "ATTEND_EVENT")).thenReturn(4L);
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertTrue(awarded.isEmpty());
     }
@@ -97,11 +100,11 @@ class BadgeServiceTest {
         profile.setCurrentStreak(7);
 
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 3L)).thenReturn(false);
-        when(rewardsRepository.findByUserId(1L)).thenReturn(Optional.of(profile));
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 3L)).thenReturn(false);
+        when(rewardsRepository.findByUserId(TEST_USER_ID)).thenReturn(Optional.of(profile));
         when(userBadgeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertEquals(1, awarded.size());
         assertEquals("Streak Master", awarded.get(0).getName());
@@ -111,11 +114,11 @@ class BadgeServiceTest {
     void checkAndAwardBadges_awardsInfluencerAfterFiveShares() {
         Badge badge = badge(4L, "Influencer");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 4L)).thenReturn(false);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "SHARE_EVENT")).thenReturn(5L);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 4L)).thenReturn(false);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "SHARE_EVENT")).thenReturn(5L);
         when(userBadgeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertEquals(1, awarded.size());
     }
@@ -124,11 +127,11 @@ class BadgeServiceTest {
     void checkAndAwardBadges_awardsVerifiedAttendeeOnProfileComplete() {
         Badge badge = badge(5L, "Verified Attendee");
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.existsByUserIdAndBadge_Id(1L, 5L)).thenReturn(false);
-        when(pointsTransactionRepository.countByUserIdAndReason(1L, "PROFILE_COMPLETED")).thenReturn(1L);
+        when(userBadgeRepository.existsByUserIdAndBadge_Id(TEST_USER_ID, 5L)).thenReturn(false);
+        when(pointsTransactionRepository.countByUserIdAndReason(TEST_USER_ID, "PROFILE_COMPLETED")).thenReturn(1L);
         when(userBadgeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertEquals(1, awarded.size());
         assertEquals("Verified Attendee", awarded.get(0).getName());
@@ -138,7 +141,7 @@ class BadgeServiceTest {
     void checkAndAwardBadges_returnsEmptyListWhenNoBadgesExist() {
         when(badgeRepository.findAll()).thenReturn(Collections.emptyList());
 
-        List<Badge> awarded = badgeService.checkAndAwardBadges(1L);
+        List<Badge> awarded = badgeService.checkAndAwardBadges(TEST_USER_ID);
 
         assertTrue(awarded.isEmpty());
     }
@@ -149,13 +152,13 @@ class BadgeServiceTest {
     void getAllBadges_marksEarnedBadgesAsUnlocked() {
         Badge badge = badge(1L, "First Attendee");
         UserBadge ub = new UserBadge();
-        ub.setUserId(1L);
+        ub.setUserId(TEST_USER_ID);
         ub.setBadge(badge);
 
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.findByUserId(1L)).thenReturn(List.of(ub));
+        when(userBadgeRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(ub));
 
-        List<BadgeResponse> responses = badgeService.getAllBadges(1L);
+        List<BadgeResponse> responses = badgeService.getAllBadges(TEST_USER_ID);
 
         assertEquals(1, responses.size());
         assertTrue(responses.get(0).isUnlocked());
@@ -166,9 +169,9 @@ class BadgeServiceTest {
         Badge badge = badge(1L, "First Attendee");
 
         when(badgeRepository.findAll()).thenReturn(List.of(badge));
-        when(userBadgeRepository.findByUserId(1L)).thenReturn(Collections.emptyList());
+        when(userBadgeRepository.findByUserId(TEST_USER_ID)).thenReturn(Collections.emptyList());
 
-        List<BadgeResponse> responses = badgeService.getAllBadges(1L);
+        List<BadgeResponse> responses = badgeService.getAllBadges(TEST_USER_ID);
 
         assertEquals(1, responses.size());
         assertFalse(responses.get(0).isUnlocked());

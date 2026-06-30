@@ -11,14 +11,17 @@ import com.eventra.backend.module.gamification.dto.AwardActionRequest;
 import com.eventra.backend.module.gamification.enums.GamificationAction;
 import com.eventra.backend.module.gamification.service.RewardsService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommunityService {
@@ -27,7 +30,7 @@ public class CommunityService {
     private final CommunityMemberRepository memberRepository;
     private final RewardsService rewardsService;
 
-    public List<CommunityResponse> getCommunities(String search, String category, String sort, Long userId) {
+    public List<CommunityResponse> getCommunities(String search, String category, String sort, UUID userId) {
         List<Community> communities;
 
         if (search != null && !search.isBlank()) {
@@ -55,7 +58,7 @@ public class CommunityService {
                 .collect(Collectors.toList());
     }
 
-    public CommunityResponse getCommunity(Long communityId, Long userId) {
+    public CommunityResponse getCommunity(Long communityId, UUID userId) {
         Community community = communityRepository.findByIdAndActiveTrue(communityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Community not found: " + communityId));
         boolean joined = userId != null && memberRepository.existsByCommunityIdAndUserId(communityId, userId);
@@ -89,7 +92,7 @@ public class CommunityService {
         CommunityMember member = new CommunityMember();
         member.setCommunityId(communityId);
         member.setUserId(req.getUserId());
-        member.setDisplayName(req.getDisplayName() != null ? req.getDisplayName() : "User " + req.getUserId());
+        member.setDisplayName(req.getDisplayName() != null ? req.getDisplayName() : "User " + req.getUserId().toString());
         member.setAvatarUrl(req.getAvatarUrl());
         memberRepository.save(member);
 
@@ -105,15 +108,16 @@ public class CommunityService {
             award.setAvatarUrl(req.getAvatarUrl());
             award.setReferenceId("community-join-" + communityId);
             rewardsService.awardAction(award);
-        } catch (Exception ignored) {
-            // gamification failure must not block join
+        } catch (Exception e) {
+            log.warn("Failed to award XP for community join. User: {}, Community: {}. Reason: {}", 
+                req.getUserId(), communityId, e.getMessage(), e);
         }
 
         return toResponse(community, true);
     }
 
     @Transactional
-    public CommunityResponse leaveCommunity(Long communityId, Long userId) {
+    public CommunityResponse leaveCommunity(Long communityId, UUID userId) {
         Community community = communityRepository.findByIdAndActiveTrue(communityId)
                 .orElseThrow(() -> new ResourceNotFoundException("Community not found: " + communityId));
 

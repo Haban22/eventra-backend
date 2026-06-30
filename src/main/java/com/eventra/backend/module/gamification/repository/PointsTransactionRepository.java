@@ -8,13 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public interface PointsTransactionRepository extends JpaRepository<PointsTransaction, Long> {
-    List<PointsTransaction> findByUserIdOrderByCreatedAtDesc(Long userId);
-    List<PointsTransaction> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+    List<PointsTransaction> findByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<PointsTransaction> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
-    long countByUserIdAndReason(Long userId, String reason);
-    boolean existsByUserIdAndReason(Long userId, String reason);
+    long countByUserIdAndReason(UUID userId, String reason);
+    boolean existsByUserIdAndReason(UUID userId, String reason);
 
     @Query("SELECT t.userId, SUM(t.xpAmount) FROM PointsTransaction t " +
            "WHERE t.createdAt >= :since AND t.type = :type " +
@@ -28,7 +29,7 @@ public interface PointsTransactionRepository extends JpaRepository<PointsTransac
            "WHERE t.userId = :userId AND t.reason = :reason AND t.referenceId IS NOT NULL " +
            "AND t.referenceId = :referenceId")
     long countByUserIdAndReasonAndReferenceId(
-            @Param("userId") Long userId,
+            @Param("userId") UUID userId,
             @Param("reason") String reason,
             @Param("referenceId") String referenceId);
 }

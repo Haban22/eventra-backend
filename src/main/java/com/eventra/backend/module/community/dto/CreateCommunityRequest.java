@@ -3,6 +3,8 @@ package com.eventra.backend.module.community.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class CreateCommunityRequest {
     @NotBlank
@@ -15,5 +17,5 @@ public class CreateCommunityRequest {
     @NotBlank
     private String category;
 
-    private Long createdByUserId;
+    private UUID createdByUserId;
 }

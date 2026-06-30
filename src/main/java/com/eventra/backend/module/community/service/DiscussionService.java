@@ -11,12 +11,14 @@ import com.eventra.backend.module.gamification.dto.AwardActionRequest;
 import com.eventra.backend.module.gamification.enums.GamificationAction;
 import com.eventra.backend.module.gamification.service.RewardsService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiscussionService {
@@ -99,8 +101,9 @@ public class DiscussionService {
             award.setAvatarUrl(req.getAuthorAvatar());
             award.setReferenceId("discussion-reply-" + reply.getId());
             rewardsService.awardAction(award);
-        } catch (Exception ignored) {
-            // gamification failure must not block reply
+        } catch (Exception e) {
+            log.warn("Failed to award XP for discussion reply. User: {}, Reply: {}. Reason: {}", 
+                req.getAuthorId(), reply.getId(), e.getMessage(), e);
         }
 
         return toReplyResponse(reply);

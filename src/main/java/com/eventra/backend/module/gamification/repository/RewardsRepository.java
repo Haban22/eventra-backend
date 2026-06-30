@@ -5,10 +5,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface RewardsRepository extends JpaRepository<RewardsProfile, Long> {
-    Optional<RewardsProfile> findByUserId(Long userId);
-    boolean existsByUserId(Long userId);
+    Optional<RewardsProfile> findByUserId(UUID userId);
+    boolean existsByUserId(UUID userId);
     List<RewardsProfile> findAllByOrderByTotalXPDesc(Pageable pageable);
-    List<RewardsProfile> findByUserIdIn(List<Long> userIds);
+    List<RewardsProfile> findByUserIdIn(List<UUID> userIds);
 }

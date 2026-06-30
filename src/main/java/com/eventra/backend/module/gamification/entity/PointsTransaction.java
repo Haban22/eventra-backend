@@ -4,6 +4,7 @@ import com.eventra.backend.module.gamification.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -13,7 +14,7 @@ public class PointsTransaction {
     private Long id;
 
     @Column(nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(nullable = false)
     private Long xpAmount = 0L;

@@ -5,6 +5,7 @@ import com.eventra.backend.module.community.enums.FlagStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class FlaggedContentResponse {
@@ -12,7 +13,7 @@ public class FlaggedContentResponse {
     private ContentType contentType;
     private Long contentId;
     private Long communityId;
-    private Long authorId;
+    private UUID authorId;
     private String authorName;
     private String contentPreview;
     private String reason;

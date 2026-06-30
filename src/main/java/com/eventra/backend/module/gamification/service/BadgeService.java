@@ -27,18 +27,18 @@ public class BadgeService {
         return badgeRepository.findAll();
     }
 
-    public List<BadgeResponse> getAllBadges(Long userId) {
+    public List<BadgeResponse> getAllBadges(UUID userId) {
         Map<Long, LocalDateTime> earnedMap = getEarnedBadgeMap(userId);
         return badgeRepository.findAll().stream()
                 .map(b -> toBadgeResponse(b, earnedMap))
                 .collect(Collectors.toList());
     }
 
-    public List<UserBadge> getUserBadgeEntities(Long userId) {
+    public List<UserBadge> getUserBadgeEntities(UUID userId) {
         return userBadgeRepository.findByUserId(userId);
     }
 
-    public List<BadgeResponse> getUserBadges(Long userId) {
+    public List<BadgeResponse> getUserBadges(UUID userId) {
         Map<Long, LocalDateTime> earnedMap = getEarnedBadgeMap(userId);
         return userBadgeRepository.findByUserId(userId).stream()
                 .map(ub -> toBadgeResponse(ub.getBadge(), earnedMap))
@@ -49,7 +49,7 @@ public class BadgeService {
      * Checks all badge conditions and awards newly earned badges.
      * Returns the list of newly awarded Badge entities (caller awards the XP bonuses).
      */
-    public List<Badge> checkAndAwardBadges(Long userId) {
+    public List<Badge> checkAndAwardBadges(UUID userId) {
         List<Badge> allBadges = badgeRepository.findAll();
         List<Badge> newlyAwarded = new ArrayList<>();
 
@@ -85,7 +85,7 @@ public class BadgeService {
 
     // ─── Private ──────────────────────────────────────────────────────────────
 
-    private boolean isConditionMet(Long userId, Badge badge) {
+    private boolean isConditionMet(UUID userId, Badge badge) {
         return switch (badge.getName()) {
             case "First Attendee" ->
                     pointsTransactionRepository.countByUserIdAndReason(userId, "RSVP_EVENT")
@@ -110,7 +110,7 @@ public class BadgeService {
         };
     }
 
-    private Map<Long, LocalDateTime> getEarnedBadgeMap(Long userId) {
+    private Map<Long, LocalDateTime> getEarnedBadgeMap(UUID userId) {
         if (userId == null) return Collections.emptyMap();
         Map<Long, LocalDateTime> map = new HashMap<>();
         userBadgeRepository.findByUserId(userId)

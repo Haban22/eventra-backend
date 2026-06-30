@@ -28,7 +28,7 @@ public class LeaderboardService {
     private final PointsTransactionRepository pointsTransactionRepository;
     private final LeaderboardRepository leaderboardRepository;
 
-    public LeaderboardResponse getLeaderboard(LeaderboardType type, int limit, Long currentUserId) {
+    public LeaderboardResponse getLeaderboard(LeaderboardType type, int limit, UUID currentUserId) {
         int effectiveLimit = limit > 0 ? Math.min(limit, 500) : DEFAULT_LIMIT;
         List<LeaderboardEntry> entries = computeEntries(type, effectiveLimit);
 
@@ -50,7 +50,7 @@ public class LeaderboardService {
     }
 
     /** Updates the cached ALL_TIME leaderboard row for a given user. */
-    public void refreshUserLeaderboard(Long userId) {
+    public void refreshUserLeaderboard(UUID userId) {
         rewardsRepository.findByUserId(userId).ifPresent(profile -> {
             Leaderboard entry = leaderboardRepository.findByUserIdAndType(userId, LeaderboardType.ALL_TIME)
                     .orElseGet(() -> {
@@ -95,17 +95,17 @@ public class LeaderboardService {
         List<Object[]> rows = pointsTransactionRepository.aggregateXpByUserSince(
                 since, TransactionType.EARNED, PageRequest.of(0, limit));
 
-        List<Long> userIds = rows.stream()
-                .map(r -> ((Number) r[0]).longValue())
+        List<UUID> userIds = rows.stream()
+                .map(r -> (UUID) r[0])
                 .collect(Collectors.toList());
 
-        Map<Long, RewardsProfile> profileMap = rewardsRepository.findByUserIdIn(userIds).stream()
+        Map<UUID, RewardsProfile> profileMap = rewardsRepository.findByUserIdIn(userIds).stream()
                 .collect(Collectors.toMap(RewardsProfile::getUserId, p -> p));
 
         List<LeaderboardEntry> entries = new ArrayList<>();
         int rank = 1;
         for (Object[] row : rows) {
-            Long uid = ((Number) row[0]).longValue();
+            UUID uid = (UUID) row[0];
             long score = ((Number) row[1]).longValue();
             RewardsProfile p = profileMap.get(uid);
             entries.add(new LeaderboardEntry(

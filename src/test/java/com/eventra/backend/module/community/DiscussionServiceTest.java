@@ -21,6 +21,7 @@ import org.mockito.quality.Strictness;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -39,6 +40,10 @@ class DiscussionServiceTest {
     private com.eventra.backend.module.community.entity.Community community;
     private Discussion discussion;
 
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+    private static final UUID OTHER_USER_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID ANOTHER_USER_ID = UUID.fromString("99999999-9999-9999-9999-999999999999");
+
     @BeforeEach
     void setUp() {
         community = new com.eventra.backend.module.community.entity.Community();
@@ -54,7 +59,7 @@ class DiscussionServiceTest {
         discussion.setCommunityId(1L);
         discussion.setTitle("Best jazz venues?");
         discussion.setContent("Looking for recommendations");
-        discussion.setAuthorId(5L);
+        discussion.setAuthorId(TEST_USER_ID);
         discussion.setAuthorName("Alice");
         discussion.setReplyCount(0);
         discussion.setHot(false);
@@ -92,7 +97,7 @@ class DiscussionServiceTest {
     @Test
     void createDiscussion_savesDiscussion() {
         CreateDiscussionRequest req = new CreateDiscussionRequest();
-        req.setAuthorId(5L);
+        req.setAuthorId(TEST_USER_ID);
         req.setAuthorName("Alice");
         req.setTitle("Best jazz venues?");
         req.setContent("Looking for recommendations");
@@ -101,7 +106,7 @@ class DiscussionServiceTest {
 
         assertNotNull(result);
         assertEquals("Best jazz venues?", result.getTitle());
-        assertEquals(5L, result.getAuthorId());
+        assertEquals(TEST_USER_ID, result.getAuthorId());
         verify(discussionRepository).save(any(Discussion.class));
     }
 
@@ -110,7 +115,7 @@ class DiscussionServiceTest {
         when(communityRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
         CreateDiscussionRequest req = new CreateDiscussionRequest();
-        req.setAuthorId(1L);
+        req.setAuthorId(ANOTHER_USER_ID);
         req.setAuthorName("Bob");
         req.setTitle("Test");
 
@@ -125,7 +130,7 @@ class DiscussionServiceTest {
                 .thenReturn(Optional.of(discussion));
 
         CreateDiscussionReplyRequest req = new CreateDiscussionReplyRequest();
-        req.setAuthorId(7L);
+        req.setAuthorId(OTHER_USER_ID);
         req.setAuthorName("Bob");
         req.setContent("Great question!");
 
@@ -133,7 +138,7 @@ class DiscussionServiceTest {
 
         assertNotNull(result);
         assertEquals("Great question!", result.getContent());
-        assertEquals(7L, result.getAuthorId());
+        assertEquals(OTHER_USER_ID, result.getAuthorId());
         assertEquals(1, discussion.getReplyCount()); // incremented
         verify(discussionRepository).save(discussion);
         verify(rewardsService).awardAction(any());
@@ -146,7 +151,7 @@ class DiscussionServiceTest {
                 .thenReturn(Optional.of(discussion));
 
         CreateDiscussionReplyRequest req = new CreateDiscussionReplyRequest();
-        req.setAuthorId(7L);
+        req.setAuthorId(OTHER_USER_ID);
         req.setAuthorName("Bob");
         req.setContent("Fifth reply!");
 
@@ -161,7 +166,7 @@ class DiscussionServiceTest {
                 .thenReturn(Optional.empty());
 
         CreateDiscussionReplyRequest req = new CreateDiscussionReplyRequest();
-        req.setAuthorId(1L);
+        req.setAuthorId(ANOTHER_USER_ID);
         req.setAuthorName("Bob");
         req.setContent("Reply");
 

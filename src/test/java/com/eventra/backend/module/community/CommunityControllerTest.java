@@ -1,5 +1,7 @@
 package com.eventra.backend.module.community;
 
+import com.eventra.backend.module.auth.entity.UserRole;
+import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.auth.security.JwtUtil;
 import com.eventra.backend.module.community.controller.AdminCommunityController;
 import com.eventra.backend.module.community.controller.CommunityController;
@@ -19,16 +21,21 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -37,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class CommunityControllerTest {
 
     @TestConfiguration
+    @EnableMethodSecurity
     static class TestSecurityConfig {
         @Bean
         SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -54,6 +62,16 @@ class CommunityControllerTest {
     @MockBean private DiscussionService discussionService;
     @MockBean private ModerationService moderationService;
 
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+
+    private UsernamePasswordAuthenticationToken adminAuth() {
+        return new UsernamePasswordAuthenticationToken(
+                new AuthPrincipal(TEST_USER_ID, UserRole.ADMIN, "jti", 9999999999L),
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+    }
+
     // ─── GET /api/communities ─────────────────────────────────────────────────
 
     @Test
@@ -70,10 +88,10 @@ class CommunityControllerTest {
 
     @Test
     void getCommunities_supportsSearchAndCategoryParams() throws Exception {
-        when(communityService.getCommunities(eq("music"), eq("Music"), eq("popular"), eq(1L)))
+        when(communityService.getCommunities(eq("music"), eq("Music"), eq("popular"), eq(TEST_USER_ID)))
                 .thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/api/communities?search=music&category=Music&sort=popular&userId=1"))
+        mockMvc.perform(get("/api/communities?search=music&category=Music&sort=popular&userId=" + TEST_USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray());
     }
@@ -136,7 +154,7 @@ class CommunityControllerTest {
         when(communityService.joinCommunity(eq(1L), any())).thenReturn(c);
 
         JoinCommunityRequest req = new JoinCommunityRequest();
-        req.setUserId(5L);
+        req.setUserId(TEST_USER_ID);
         req.setDisplayName("Bob");
 
         mockMvc.perform(post("/api/communities/1/join")
@@ -154,14 +172,9 @@ class CommunityControllerTest {
         CommunityResponse c = sampleCommunity(1L, "Cairo Music Lovers");
         c.setJoined(false);
         c.setMemberCount(999L);
-        when(communityService.leaveCommunity(eq(1L), eq(5L))).thenReturn(c);
+        when(communityService.leaveCommunity(eq(1L), eq(TEST_USER_ID))).thenReturn(c);
 
-        LeaveCommunityRequest req = new LeaveCommunityRequest();
-        req.setUserId(5L);
-
-        mockMvc.perform(delete("/api/communities/1/leave")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+        mockMvc.perform(delete("/api/communities/1/leave").with(authentication(adminAuth())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.joined").value(false))
                 .andExpect(jsonPath("$.data.memberCount").value(999));
@@ -172,7 +185,7 @@ class CommunityControllerTest {
     @Test
     void getMembers_returns200WithMemberList() throws Exception {
         CommunityMemberResponse member = new CommunityMemberResponse();
-        member.setUserId(5L);
+        member.setUserId(TEST_USER_ID);
         member.setDisplayName("Bob");
 
         when(communityService.getMembers(eq(1L), anyInt(), anyInt())).thenReturn(List.of(member));
@@ -203,7 +216,7 @@ class CommunityControllerTest {
         when(discussionService.createDiscussion(eq(1L), any())).thenReturn(d);
 
         CreateDiscussionRequest req = new CreateDiscussionRequest();
-        req.setAuthorId(5L);
+        req.setAuthorId(TEST_USER_ID);
         req.setAuthorName("Alice");
         req.setTitle("Best jazz venues?");
 
@@ -221,6 +234,7 @@ class CommunityControllerTest {
         DiscussionReplyResponse reply = new DiscussionReplyResponse();
         reply.setId(1L);
         reply.setDiscussionId(10L);
+        reply.setAuthorId(TEST_USER_ID);
         reply.setAuthorName("Bob");
         reply.setContent("Great suggestion!");
         reply.setCreatedAt(LocalDateTime.now());
@@ -228,7 +242,7 @@ class CommunityControllerTest {
         when(discussionService.addReply(eq(1L), eq(10L), any())).thenReturn(reply);
 
         CreateDiscussionReplyRequest req = new CreateDiscussionReplyRequest();
-        req.setAuthorId(7L);
+        req.setAuthorId(TEST_USER_ID);
         req.setAuthorName("Bob");
         req.setContent("Great suggestion!");
 
@@ -253,7 +267,7 @@ class CommunityControllerTest {
         ModerationStatsResponse stats = new ModerationStatsResponse(1L, 0L, 1L, List.of(flagged));
         when(moderationService.getFlaggedContent()).thenReturn(stats);
 
-        mockMvc.perform(get("/api/admin/community/flagged"))
+        mockMvc.perform(get("/api/admin/community/flagged").with(authentication(adminAuth())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.pendingFlags").value(1))
                 .andExpect(jsonPath("$.data.flaggedItems[0].reason").value("Spam"));
@@ -269,7 +283,7 @@ class CommunityControllerTest {
 
         when(moderationService.approveContent(eq(1L), any())).thenReturn(flagged);
 
-        mockMvc.perform(post("/api/admin/community/flagged/1/approve"))
+        mockMvc.perform(post("/api/admin/community/flagged/1/approve").with(authentication(adminAuth())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("APPROVED"));
     }
@@ -294,7 +308,7 @@ class CommunityControllerTest {
         d.setCommunityId(1L);
         d.setTitle("Best jazz venues?");
         d.setContent("Looking for recommendations");
-        d.setAuthorId(5L);
+        d.setAuthorId(TEST_USER_ID);
         d.setAuthorName("Alice");
         d.setReplyCount(0);
         d.setHot(false);

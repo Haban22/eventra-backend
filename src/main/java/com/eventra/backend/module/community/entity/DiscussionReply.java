@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -18,7 +19,7 @@ public class DiscussionReply {
     private Long discussionId;
 
     @Column(name = "author_id", nullable = false)
-    private Long authorId;
+    private UUID authorId;
 
     @Column(nullable = false)
     private String authorName;

@@ -8,7 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.eventra.backend.module.auth.security.AuthPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/communities")
@@ -22,7 +26,7 @@ public class CommunityController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "popular") String sort,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(
                 communityService.getCommunities(search, category, sort, userId)));
     }
@@ -30,7 +34,7 @@ public class CommunityController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CommunityResponse>> getCommunity(
             @PathVariable Long id,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(communityService.getCommunity(id, userId)));
     }
 
@@ -49,9 +53,9 @@ public class CommunityController {
 
     @DeleteMapping("/{id}/leave")
     public ResponseEntity<ApiResponse<CommunityResponse>> leaveCommunity(
-            @PathVariable Long id,
-            @Valid @RequestBody LeaveCommunityRequest req) {
-        return ResponseEntity.ok(ApiResponse.success(communityService.leaveCommunity(id, req.getUserId())));
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(communityService.leaveCommunity(id, principal.userId())));
     }
 
     @GetMapping("/{id}/members")

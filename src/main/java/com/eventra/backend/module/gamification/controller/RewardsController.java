@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/gamification")
@@ -28,23 +28,20 @@ public class RewardsController {
      * Returns the full rewards profile: level, XP, points, streaks, badges, and recent transactions.
      */
     @GetMapping("/profile/{userId}")
-    public ResponseEntity<ApiResponse<RewardsProfileResponse>> getProfile(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<RewardsProfileResponse>> getProfile(@PathVariable UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(rewardsService.getProfile(userId)));
     }
 
     /**
      * POST /api/gamification/profile
      * Creates (or returns existing) a rewards profile for a user.
-     * Body: { "userId": 1, "displayName": "Ahmed Hassan", "avatarUrl": "..." }
+     * Body: CreateProfileRequest (userId, displayName, avatarUrl)
      */
     @PostMapping("/profile")
     public ResponseEntity<ApiResponse<RewardsProfileResponse>> createProfile(
-            @RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        String displayName = body.containsKey("displayName") ? body.get("displayName").toString() : null;
-        String avatarUrl = body.containsKey("avatarUrl") ? body.get("avatarUrl").toString() : null;
-        rewardsService.getOrCreateProfile(userId, displayName, avatarUrl);
-        return ResponseEntity.ok(ApiResponse.success(rewardsService.getProfile(userId)));
+            @Valid @RequestBody CreateProfileRequest req) {
+        rewardsService.getOrCreateProfile(req.getUserId(), req.getDisplayName(), req.getAvatarUrl());
+        return ResponseEntity.ok(ApiResponse.success(rewardsService.getProfile(req.getUserId())));
     }
 
     /**
@@ -61,15 +58,12 @@ public class RewardsController {
     /**
      * POST /api/gamification/redeem
      * Deducts points from a user's balance.
-     * Body: { "userId": 1, "cost": 50, "description": "Free ticket" }
+     * Body: RedeemPointsRequest (userId, cost, description)
      */
     @PostMapping("/redeem")
     public ResponseEntity<ApiResponse<PointsTransactionResponse>> redeemPoints(
-            @RequestBody Map<String, Object> body) {
-        Long userId = Long.valueOf(body.get("userId").toString());
-        long cost = Long.parseLong(body.get("cost").toString());
-        String description = body.containsKey("description") ? body.get("description").toString() : null;
-        return ResponseEntity.ok(ApiResponse.success(rewardsService.redeemPoints(userId, cost, description)));
+            @Valid @RequestBody RedeemPointsRequest req) {
+        return ResponseEntity.ok(ApiResponse.success(rewardsService.redeemPoints(req.getUserId(), req.getCost(), req.getDescription())));
     }
 
     /**
@@ -78,7 +72,7 @@ public class RewardsController {
      */
     @GetMapping("/transactions/{userId}")
     public ResponseEntity<ApiResponse<List<PointsTransactionResponse>>> getTransactions(
-            @PathVariable Long userId,
+            @PathVariable UUID userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(rewardsService.getTransactionHistory(userId, page, size)));
@@ -90,7 +84,7 @@ public class RewardsController {
      */
     @GetMapping("/badges")
     public ResponseEntity<ApiResponse<List<BadgeResponse>>> getAllBadges(
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(badgeService.getAllBadges(userId)));
     }
 
@@ -99,7 +93,7 @@ public class RewardsController {
      * Returns only the badges a user has earned.
      */
     @GetMapping("/badges/user/{userId}")
-    public ResponseEntity<ApiResponse<List<BadgeResponse>>> getUserBadges(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<List<BadgeResponse>>> getUserBadges(@PathVariable UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(badgeService.getUserBadges(userId)));
     }
 
@@ -112,7 +106,7 @@ public class RewardsController {
     public ResponseEntity<ApiResponse<LeaderboardResponse>> getLeaderboard(
             @RequestParam(defaultValue = "ALL_TIME") LeaderboardType type,
             @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(leaderboardService.getLeaderboard(type, limit, userId)));
     }
 }

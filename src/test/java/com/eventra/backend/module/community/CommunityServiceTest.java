@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -38,6 +39,10 @@ class CommunityServiceTest {
     @InjectMocks private CommunityService communityService;
 
     private Community community;
+
+    private static final UUID TEST_USER_ID = UUID.fromString("d3b07384-d113-4956-9d8e-1282ec4567e9");
+    private static final UUID OTHER_USER_ID = UUID.fromString("99999999-9999-9999-9999-999999999999");
+    private static final UUID ANOTHER_USER_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
 
     @BeforeEach
     void setUp() {
@@ -61,12 +66,12 @@ class CommunityServiceTest {
     void getCommunities_returnsAllCommunitiesWithJoinStatus() {
         CommunityMember membership = new CommunityMember();
         membership.setCommunityId(1L);
-        membership.setUserId(42L);
+        membership.setUserId(TEST_USER_ID);
 
         when(communityRepository.findAllByActiveTrueOrderByMemberCountDesc()).thenReturn(List.of(community));
-        when(memberRepository.findByUserId(42L)).thenReturn(List.of(membership));
+        when(memberRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(membership));
 
-        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", 42L);
+        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", TEST_USER_ID);
 
         assertEquals(1, result.size());
         assertTrue(result.get(0).isJoined());
@@ -76,9 +81,9 @@ class CommunityServiceTest {
     @Test
     void getCommunities_returnsNotJoinedWhenUserNotMember() {
         when(communityRepository.findAllByActiveTrueOrderByMemberCountDesc()).thenReturn(List.of(community));
-        when(memberRepository.findByUserId(99L)).thenReturn(Collections.emptyList());
+        when(memberRepository.findByUserId(OTHER_USER_ID)).thenReturn(Collections.emptyList());
 
-        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", 99L);
+        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", OTHER_USER_ID);
 
         assertEquals(1, result.size());
         assertFalse(result.get(0).isJoined());
@@ -87,7 +92,7 @@ class CommunityServiceTest {
     @Test
     void getCommunities_sortsByEventCount() {
         when(communityRepository.findAllByActiveTrueOrderByEventCountDesc()).thenReturn(List.of(community));
-        when(memberRepository.findByUserId(any())).thenReturn(Collections.emptyList());
+        when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
         communityService.getCommunities(null, null, "events", null);
 
@@ -97,7 +102,7 @@ class CommunityServiceTest {
     @Test
     void getCommunities_sortsByNameAlphabetically() {
         when(communityRepository.findAllByActiveTrueOrderByNameAsc()).thenReturn(List.of(community));
-        when(memberRepository.findByUserId(any())).thenReturn(Collections.emptyList());
+        when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
         communityService.getCommunities(null, null, "az", null);
 
@@ -108,7 +113,7 @@ class CommunityServiceTest {
     void getCommunities_filtersbyCategory() {
         when(communityRepository.findAllByCategoryAndActiveTrueOrderByMemberCountDesc("Music"))
                 .thenReturn(List.of(community));
-        when(memberRepository.findByUserId(any())).thenReturn(Collections.emptyList());
+        when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
         List<CommunityResponse> result = communityService.getCommunities(null, "Music", "popular", null);
 
@@ -119,7 +124,7 @@ class CommunityServiceTest {
     @Test
     void getCommunities_searchesByNameOrDescription() {
         when(communityRepository.searchByNameOrDescription("music")).thenReturn(List.of(community));
-        when(memberRepository.findByUserId(any())).thenReturn(Collections.emptyList());
+        when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
         List<CommunityResponse> result = communityService.getCommunities("music", null, "popular", null);
 
@@ -131,9 +136,9 @@ class CommunityServiceTest {
     @Test
     void getCommunity_returnsCorrectCommunity() {
         when(communityRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(community));
-        when(memberRepository.existsByCommunityIdAndUserId(1L, 42L)).thenReturn(true);
+        when(memberRepository.existsByCommunityIdAndUserId(1L, TEST_USER_ID)).thenReturn(true);
 
-        CommunityResponse result = communityService.getCommunity(1L, 42L);
+        CommunityResponse result = communityService.getCommunity(1L, TEST_USER_ID);
 
         assertEquals(1L, result.getId());
         assertTrue(result.isJoined());
@@ -178,10 +183,10 @@ class CommunityServiceTest {
     @Test
     void joinCommunity_addsMemberAndIncrementCount() {
         when(communityRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(community));
-        when(memberRepository.existsByCommunityIdAndUserId(1L, 5L)).thenReturn(false);
+        when(memberRepository.existsByCommunityIdAndUserId(1L, ANOTHER_USER_ID)).thenReturn(false);
 
         JoinCommunityRequest req = new JoinCommunityRequest();
-        req.setUserId(5L);
+        req.setUserId(ANOTHER_USER_ID);
         req.setDisplayName("Bob");
 
         CommunityResponse result = communityService.joinCommunity(1L, req);
@@ -194,10 +199,10 @@ class CommunityServiceTest {
     @Test
     void joinCommunity_isIdempotentIfAlreadyMember() {
         when(communityRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(community));
-        when(memberRepository.existsByCommunityIdAndUserId(1L, 5L)).thenReturn(true);
+        when(memberRepository.existsByCommunityIdAndUserId(1L, ANOTHER_USER_ID)).thenReturn(true);
 
         JoinCommunityRequest req = new JoinCommunityRequest();
-        req.setUserId(5L);
+        req.setUserId(ANOTHER_USER_ID);
 
         CommunityResponse result = communityService.joinCommunity(1L, req);
 
@@ -210,13 +215,13 @@ class CommunityServiceTest {
     @Test
     void leaveCommunity_removesMemberAndDecrementsCount() {
         CommunityMember member = new CommunityMember();
-        member.setUserId(5L);
+        member.setUserId(ANOTHER_USER_ID);
         member.setCommunityId(1L);
 
         when(communityRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(1L, 5L)).thenReturn(Optional.of(member));
+        when(memberRepository.findByCommunityIdAndUserId(1L, ANOTHER_USER_ID)).thenReturn(Optional.of(member));
 
-        CommunityResponse result = communityService.leaveCommunity(1L, 5L);
+        CommunityResponse result = communityService.leaveCommunity(1L, ANOTHER_USER_ID);
 
         assertFalse(result.isJoined());
         assertEquals(99L, result.getMemberCount());
@@ -226,9 +231,9 @@ class CommunityServiceTest {
     @Test
     void leaveCommunity_throwsWhenNotMember() {
         when(communityRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(community));
-        when(memberRepository.findByCommunityIdAndUserId(1L, 99L)).thenReturn(Optional.empty());
+        when(memberRepository.findByCommunityIdAndUserId(1L, OTHER_USER_ID)).thenReturn(Optional.empty());
 
-        assertThrows(ValidationException.class, () -> communityService.leaveCommunity(1L, 99L));
+        assertThrows(ValidationException.class, () -> communityService.leaveCommunity(1L, OTHER_USER_ID));
     }
 
     // ─── getMembers ───────────────────────────────────────────────────────────
@@ -236,7 +241,7 @@ class CommunityServiceTest {
     @Test
     void getMembers_returnsPagedMembers() {
         CommunityMember m = new CommunityMember();
-        m.setUserId(5L);
+        m.setUserId(ANOTHER_USER_ID);
         m.setDisplayName("Bob");
         m.setCommunityId(1L);
 
@@ -247,7 +252,7 @@ class CommunityServiceTest {
         List<CommunityMemberResponse> result = communityService.getMembers(1L, 0, 20);
 
         assertEquals(1, result.size());
-        assertEquals(5L, result.get(0).getUserId());
+        assertEquals(ANOTHER_USER_ID, result.get(0).getUserId());
         assertEquals("Bob", result.get(0).getDisplayName());
     }
 }

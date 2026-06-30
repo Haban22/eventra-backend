@@ -4,10 +4,11 @@ import com.eventra.backend.module.gamification.valueobject.Level;
 import lombok.Data;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 public class RewardsProfileResponse {
-    private Long userId;
+    private UUID userId;
     private String displayName;
     private String avatarUrl;
     private long pointsBalance;

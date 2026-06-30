@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -26,7 +27,7 @@ public class FlaggedContent {
     private Long communityId;
 
     @Column(name = "author_id", nullable = false)
-    private Long authorId;
+    private UUID authorId;
 
     @Column(nullable = false)
     private String authorName;
@@ -44,7 +45,7 @@ public class FlaggedContent {
     @Column(nullable = false)
     private FlagStatus status = FlagStatus.PENDING;
 
-    private Long resolvedByUserId;
+    private UUID resolvedByUserId;
 
     private LocalDateTime resolvedAt;
 

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Data
@@ -25,7 +26,7 @@ public class Community {
     @Column(nullable = false)
     private String category;
 
-    private Long createdByUserId;
+    private UUID createdByUserId;
 
     @Column(nullable = false)
     private Long memberCount = 0L;

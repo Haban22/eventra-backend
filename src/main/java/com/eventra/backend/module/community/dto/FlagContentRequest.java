@@ -3,6 +3,7 @@ package com.eventra.backend.module.community.dto;
 import com.eventra.backend.module.community.enums.ContentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.UUID;
 import lombok.Data;
 
 @Data
@@ -16,7 +17,7 @@ public class FlagContentRequest {
     private Long communityId;
 
     @NotNull
-    private Long authorId;
+    private UUID authorId;
 
     @NotBlank
     private String authorName;
