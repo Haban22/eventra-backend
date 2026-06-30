@@ -14,8 +14,9 @@ public class AiServiceClient {
 
     private final RestClient restClient;
 
-    public AiServiceClient(@Value("${eventra.ai.url:http://localhost:8001}") String aiUrl) {
-        this.restClient = RestClient.builder()
+    public AiServiceClient(RestClient.Builder restClientBuilder, 
+                           @Value("${eventra.ai.url:http://localhost:8001}") String aiUrl) {
+        this.restClient = restClientBuilder
                 .baseUrl(aiUrl)
                 .build();
     }
