@@ -24,7 +24,7 @@ def test_positive_sentiment():
 
     data = response.json()
 
-    assert data[0]["label"] == "POSITIVE"
+    assert data["label"] == "POSITIVE"
 
 
 def test_negative_sentiment():
@@ -36,7 +36,7 @@ def test_negative_sentiment():
 
     data = response.json()
 
-    assert data[0]["label"] == "NEGATIVE"
+    assert data["label"] == "NEGATIVE"
 
 
 def test_empty_text():
