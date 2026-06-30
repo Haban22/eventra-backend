@@ -1,0 +1,1323 @@
+{
+  "info": {
+    "_postman_id": "ad3f1ab4-ba3f-47e1-a40c-50e8f28b3764",
+    "name": "Eventra - M2 Event Module Integration Tests",
+    "description": "Integration tests for the Event Management Module (M2) of Eventra Backend, covering Category, Venue, Event, Bookmark, and Event Approval APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Authentication",
+      "item": [
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman_admin@eventra.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Token is returned\", function () {",
+                  "    pm.expect(jsonData.access_token).to.not.be.undefined;",
+                  "});",
+                  "pm.collectionVariables.set(\"admin_token\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizer Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman_organizer@eventra.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Token is returned\", function () {",
+                  "    pm.expect(jsonData.access_token).to.not.be.undefined;",
+                  "});",
+                  "pm.collectionVariables.set(\"organizer_token\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attendee Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"postman_attendee@eventra.com\",\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Token is returned\", function () {",
+                  "    pm.expect(jsonData.access_token).to.not.be.undefined;",
+                  "});",
+                  "pm.collectionVariables.set(\"attendee_token\", jsonData.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Admin Setup",
+      "item": [
+        {
+          "name": "Create Category (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/categories",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{dynamic_category_name}}\",\n  \"icon\": \"cpu\",\n  \"description\": \"Tech events and conferences\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set(\"dynamic_category_name\", \"Tech-\" + Math.floor(Math.random() * 1000000));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Category ID is returned\", function () {",
+                  "    pm.expect(jsonData.id).to.not.be.undefined;",
+                  "    pm.expect(jsonData.name).to.eql(pm.variables.get(\"dynamic_category_name\"));",
+                  "});",
+                  "pm.collectionVariables.set(\"category_id\", jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Venue (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/venues",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "venues"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{dynamic_venue_name}}\",\n  \"address\": \"123 Innovation St\",\n  \"city\": \"Amman\",\n  \"latitude\": 31.95,\n  \"longitude\": 35.91,\n  \"maxCapacity\": 500,\n  \"amenities\": [\n    \"WIFI\",\n    \"PARKING\",\n    \"RESTROOMS\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.variables.set(\"dynamic_venue_name\", \"Silicon Hall \" + Math.floor(Math.random() * 1000000));"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Venue ID is returned\", function () {",
+                  "    pm.expect(jsonData.id).to.not.be.undefined;",
+                  "    pm.expect(jsonData.name).to.eql(pm.variables.get(\"dynamic_venue_name\"));",
+                  "});",
+                  "pm.collectionVariables.set(\"venue_id\", jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Organizer Management",
+      "item": [
+        {
+          "name": "Create Event (Organizer Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Event\",\n  \"description\": \"An automated testing event for M2 module.\",\n  \"dateTime\": \"2026-12-01T18:00:00Z\",\n  \"locationAddress\": \"Silicon Hall, 123 Innovation St\",\n  \"locationCity\": \"Amman\",\n  \"locationLatitude\": 31.95,\n  \"locationLongitude\": 35.91,\n  \"venueId\": \"{{venue_id}}\",\n  \"categoryId\": \"{{category_id}}\",\n  \"capacityMaximum\": 150,\n  \"isOnline\": false,\n  \"onlineUrl\": null,\n  \"coverImageUrl\": \"https://example.com/cover.jpg\",\n  \"tags\": [\n    \"tech\",\n    \"postman\",\n    \"test\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Event created successfully\", function () {",
+                  "    pm.expect(jsonData.id).to.not.be.undefined;",
+                  "    pm.expect(jsonData.title).to.eql(\"Postman Test Event\");",
+                  "    pm.expect(jsonData.status).to.eql(\"DRAFT\");",
+                  "});",
+                  "pm.collectionVariables.set(\"event_id\", jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Event (Organizer Only)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events/{{event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events",
+                "{{event_id}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Event (Updated)\",\n  \"description\": \"An updated automated testing event.\",\n  \"dateTime\": \"2026-12-01T18:30:00Z\",\n  \"locationAddress\": \"Silicon Hall, 123 Innovation St\",\n  \"locationCity\": \"Amman\",\n  \"locationLatitude\": 31.95,\n  \"locationLongitude\": 35.91,\n  \"venueId\": \"{{venue_id}}\",\n  \"categoryId\": \"{{category_id}}\",\n  \"capacityMaximum\": 200,\n  \"isOnline\": false,\n  \"onlineUrl\": null,\n  \"tags\": [\n    \"tech\",\n    \"postman\",\n    \"updated\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Event updated successfully\", function () {",
+                  "    pm.expect(jsonData.title).to.eql(\"Postman Test Event (Updated)\");",
+                  "    pm.expect(jsonData.capacityMaximum).to.eql(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Organizer's Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Event list contains our created event\", function () {",
+                  "    var found = false;",
+                  "    var targetId = pm.collectionVariables.get(\"event_id\");",
+                  "    for (var i = 0; i < jsonData.length; i++) {",
+                  "        if (jsonData[i].id === targetId) {",
+                  "            found = true;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish Event (Request Approval)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events/{{event_id}}/publish",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events",
+                "{{event_id}}",
+                "publish"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Event status is PENDING_APPROVAL\", function () {",
+                  "    pm.expect(jsonData.status).to.eql(\"PENDING_APPROVAL\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Event (Organizer Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events/{{event_id}}/duplicate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events",
+                "{{event_id}}",
+                "duplicate"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Duplicated event has Copy suffix and DRAFT status\", function () {",
+                  "    pm.expect(jsonData.id).to.not.be.undefined;",
+                  "    pm.expect(jsonData.title).to.contain(\"(Copy)\");",
+                  "    pm.expect(jsonData.status).to.eql(\"DRAFT\");",
+                  "});",
+                  "pm.collectionVariables.set(\"duplicate_event_id\", jsonData.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel/Delete Event (Organizer Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{organizer_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/organizer/events/{{duplicate_event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "organizer",
+                "events",
+                "{{duplicate_event_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Cancellation message is returned\", function () {",
+                  "    pm.expect(jsonData.message).to.eql(\"Event cancelled\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Admin Approval",
+      "item": [
+        {
+          "name": "Approve Event (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/approve",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "approve"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"feedback\": \"Approved via automated Postman test.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Approval status is APPROVED\", function () {",
+                  "    pm.expect(jsonData.status).to.eql(\"APPROVED\");",
+                  "    pm.expect(jsonData.feedback).to.eql(\"Approved via automated Postman test.\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Approval Record (Admin Only)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/approval",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "approval"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Approval record fields match\", function () {",
+                  "    pm.expect(jsonData.status).to.eql(\"APPROVED\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Attendee & Public Endpoints",
+      "item": [
+        {
+          "name": "Get Event Details (Attendee Auth)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Event details match and status is PUBLISHED\", function () {",
+                  "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"event_id\"));",
+                  "    pm.expect(jsonData.status).to.eql(\"PUBLISHED\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Events (Public Search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "keyword",
+                  "value": "Postman"
+                },
+                {
+                  "key": "city",
+                  "value": "Amman"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Search results contains our event\", function () {",
+                  "    pm.expect(jsonData.content).to.be.an('array');",
+                  "    var found = false;",
+                  "    var targetId = pm.collectionVariables.get(\"event_id\");",
+                  "    for (var i = 0; i < jsonData.content.length; i++) {",
+                  "        if (jsonData.content[i].id === targetId) {",
+                  "            found = true;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/categories",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "categories"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Categories contain our created category\", function () {",
+                  "    var found = false;",
+                  "    var targetId = pm.collectionVariables.get(\"category_id\");",
+                  "    for (var i = 0; i < jsonData.length; i++) {",
+                  "        if (jsonData[i].id === targetId) {",
+                  "            found = true;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Venues by City",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/venues/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "venues",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Amman"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Venues contain our created venue\", function () {",
+                  "    var found = false;",
+                  "    var targetId = pm.collectionVariables.get(\"venue_id\");",
+                  "    for (var i = 0; i < jsonData.length; i++) {",
+                  "        if (jsonData[i].id === targetId) {",
+                  "            found = true;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Venue Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/venues/{{venue_id}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "venues",
+                "{{venue_id}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Venue capacity is correct\", function () {",
+                  "    pm.expect(jsonData.maxCapacity).to.eql(500);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Bookmark Endpoints",
+      "item": [
+        {
+          "name": "Check Bookmark Status (Initial - False)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/bookmark",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "bookmark"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Event is not bookmarked initially\", function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.eql(\"false\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Bookmark",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/bookmark",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "bookmark"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Message is Event bookmarked\", function () {",
+                  "    pm.expect(jsonData.message).to.eql(\"Event bookmarked\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Bookmark Status (After Add - True)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/bookmark",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "bookmark"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Event is bookmarked\", function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.eql(\"true\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Attendee's Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/attendee/bookmarks",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "attendee",
+                "bookmarks"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Bookmarks list contains our event\", function () {",
+                  "    pm.expect(jsonData.content).to.be.an('array');",
+                  "    var found = false;",
+                  "    var targetId = pm.collectionVariables.get(\"event_id\");",
+                  "    for (var i = 0; i < jsonData.content.length; i++) {",
+                  "        if (jsonData.content[i].id === targetId) {",
+                  "            found = true;",
+                  "            break;",
+                  "        }",
+                  "    }",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Remove Bookmark",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/bookmark",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "bookmark"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Message is Bookmark removed\", function () {",
+                  "    pm.expect(jsonData.message).to.eql(\"Bookmark removed\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Bookmark Status (After Delete - False)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{attendee_token}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8080/api/v1/events/{{event_id}}/bookmark",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{event_id}}",
+                "bookmark"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Event is not bookmarked anymore\", function () {",
+                  "    var body = pm.response.text();",
+                  "    pm.expect(body).to.eql(\"false\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "organizer_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "attendee_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "venue_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "event_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "duplicate_event_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
