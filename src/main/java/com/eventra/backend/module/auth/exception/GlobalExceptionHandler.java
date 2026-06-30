@@ -4,6 +4,7 @@ import com.eventra.backend.common.exception.ResourceNotFoundException;
 import com.eventra.backend.common.exception.UnauthorizedException;
 import com.eventra.backend.common.exception.ValidationException;
 import com.eventra.backend.common.response.ApiResponse;
+import com.eventra.backend.module.analytics.client.AiServiceClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -54,6 +55,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", "ACCESS_DENIED", "message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AiServiceClient.AiServiceUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleAiUnavailable(AiServiceClient.AiServiceUnavailableException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", "AI_SERVICE_UNAVAILABLE", "message", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
