@@ -1,6 +1,7 @@
 package com.eventra.backend.module.booking.service;
 
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.config.service.SystemConfigService;
 import com.eventra.backend.module.booking.dto.request.BookingRequest;
 import com.eventra.backend.module.booking.dto.response.BookingResponse;
 import com.eventra.backend.module.booking.entity.Booking;
@@ -32,13 +33,16 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final TicketRepository ticketRepository;
     private final EventRepository eventRepository;
+    private final SystemConfigService systemConfigService;
 
     public BookingService(BookingRepository bookingRepository,
                           TicketRepository ticketRepository,
-                          EventRepository eventRepository) {
+                          EventRepository eventRepository,
+                          SystemConfigService systemConfigService) {
         this.bookingRepository = bookingRepository;
         this.ticketRepository = ticketRepository;
         this.eventRepository = eventRepository;
+        this.systemConfigService = systemConfigService;
     }
 
     @Transactional
@@ -85,14 +89,15 @@ public class BookingService {
         item.setTicketId(ticket.getId());
         item.setQuantity(request.quantity());
 
-        // Create booking with 15-minute hold
+        // Create booking with a configurable hold window (SystemConfig.ticketHoldTimeoutMinutes)
         Booking booking = new Booking();
         booking.setAttendeeId(attendeeId);
         booking.setEventId(request.eventId());
         booking.getItems().add(item);
         booking.setTotalAmount(new Money(total, "EGP"));
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
-        booking.setHoldExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
+        int holdMinutes = systemConfigService.getConfig().getTicketHoldTimeoutMinutes();
+        booking.setHoldExpiresAt(Instant.now().plus(holdMinutes, ChronoUnit.MINUTES));
 
         return BookingResponse.from(bookingRepository.save(booking));
     }
@@ -130,6 +135,13 @@ public class BookingService {
         if (event.getDateTime().isBefore(Instant.now())) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                     "EVENT_ALREADY_PASSED", "Cannot cancel a booking for an event that has already happened");
+        }
+
+        int windowHours = systemConfigService.getConfig().getCancellationWindowHours();
+        if (Instant.now().plus(windowHours, ChronoUnit.HOURS).isAfter(event.getDateTime())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "OUTSIDE_CANCELLATION_WINDOW",
+                    "Cancellations must be made at least " + windowHours + " hours before the event");
         }
 
         booking.cancel();
