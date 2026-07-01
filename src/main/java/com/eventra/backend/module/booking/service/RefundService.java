@@ -13,6 +13,7 @@ import com.eventra.backend.module.booking.repository.PaymentRepository;
 import com.eventra.backend.module.booking.repository.RefundRepository;
 import com.eventra.backend.module.booking.repository.TicketRepository;
 import com.eventra.backend.module.booking.valueobject.Money;
+import com.eventra.backend.module.wallet.service.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,17 +28,20 @@ public class RefundService {
     private final PaymentRepository paymentRepository;
     private final TicketRepository ticketRepository;
     private final StripeGateway stripeGateway;
+    private final WalletService walletService;
 
     public RefundService(RefundRepository refundRepository,
                          BookingRepository bookingRepository,
                          PaymentRepository paymentRepository,
                          TicketRepository ticketRepository,
-                         StripeGateway stripeGateway) {
+                         StripeGateway stripeGateway,
+                         WalletService walletService) {
         this.refundRepository = refundRepository;
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.ticketRepository = ticketRepository;
         this.stripeGateway = stripeGateway;
+        this.walletService = walletService;
     }
 
     @Transactional
@@ -70,8 +74,14 @@ public class RefundService {
                 .multiply(java.math.BigDecimal.valueOf(request.quantity()))
                 .divide(java.math.BigDecimal.valueOf(totalQuantity), 2, java.math.RoundingMode.HALF_UP);
 
-        // Process refund via gateway
-        stripeGateway.refund(payment.getTransactionId(), refundAmount);
+        // Process refund via gateway (card/PayPal — mock, no real ledger to update);
+        // WALLET payments have a real internal balance, so credit it back directly
+        // instead — the card-mock gateway has nothing to refund into in that case.
+        if (payment.getPaymentMethod() == com.eventra.backend.module.booking.enums.PaymentMethod.WALLET) {
+            walletService.refundToWallet(attendeeId, refundAmount, booking.getId(), request.reason());
+        } else {
+            stripeGateway.refund(payment.getTransactionId(), refundAmount);
+        }
 
         if (booking.getItems().isEmpty()) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
