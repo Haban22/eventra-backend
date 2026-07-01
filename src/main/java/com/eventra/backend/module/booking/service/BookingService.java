@@ -5,14 +5,20 @@ import com.eventra.backend.module.config.service.SystemConfigService;
 import com.eventra.backend.module.booking.dto.request.BookingRequest;
 import com.eventra.backend.module.booking.dto.response.BookingResponse;
 import com.eventra.backend.module.booking.entity.Booking;
+import com.eventra.backend.module.booking.entity.Payment;
 import com.eventra.backend.module.booking.entity.Ticket;
 import com.eventra.backend.module.booking.enums.BookingStatus;
+import com.eventra.backend.module.booking.enums.PaymentMethod;
+import com.eventra.backend.module.booking.enums.PaymentStatus;
+import com.eventra.backend.module.booking.gateway.StripeGateway;
 import com.eventra.backend.module.booking.repository.BookingRepository;
+import com.eventra.backend.module.booking.repository.PaymentRepository;
 import com.eventra.backend.module.booking.repository.TicketRepository;
 import com.eventra.backend.module.booking.valueobject.BookingItem;
 import com.eventra.backend.module.booking.valueobject.Money;
 import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.wallet.service.WalletService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -34,15 +40,24 @@ public class BookingService {
     private final TicketRepository ticketRepository;
     private final EventRepository eventRepository;
     private final SystemConfigService systemConfigService;
+    private final PaymentRepository paymentRepository;
+    private final WalletService walletService;
+    private final StripeGateway stripeGateway;
 
     public BookingService(BookingRepository bookingRepository,
                           TicketRepository ticketRepository,
                           EventRepository eventRepository,
-                          SystemConfigService systemConfigService) {
+                          SystemConfigService systemConfigService,
+                          PaymentRepository paymentRepository,
+                          WalletService walletService,
+                          StripeGateway stripeGateway) {
         this.bookingRepository = bookingRepository;
         this.ticketRepository = ticketRepository;
         this.eventRepository = eventRepository;
         this.systemConfigService = systemConfigService;
+        this.paymentRepository = paymentRepository;
+        this.walletService = walletService;
+        this.stripeGateway = stripeGateway;
     }
 
     @Transactional
@@ -142,6 +157,23 @@ public class BookingService {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                     "OUTSIDE_CANCELLATION_WINDOW",
                     "Cancellations must be made at least " + windowHours + " hours before the event");
+        }
+
+        // If the booking was already paid for, refund it — a WALLET payment has a real
+        // ledger balance to credit back; card/PayPal go through the same mock gateway
+        // RefundService uses (no real ledger, so it's a no-op either way).
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            paymentRepository.findByBookingId(booking.getId()).ifPresent(payment -> {
+                if (payment.getStatus() == PaymentStatus.COMPLETED) {
+                    if (payment.getPaymentMethod() == PaymentMethod.WALLET) {
+                        walletService.refundToWallet(attendeeId, booking.getTotalAmount().getAmount(), booking.getId(), "Booking cancelled");
+                    } else {
+                        stripeGateway.refund(payment.getTransactionId(), booking.getTotalAmount().getAmount());
+                    }
+                    payment.setStatus(PaymentStatus.REFUNDED);
+                    paymentRepository.save(payment);
+                }
+            });
         }
 
         booking.cancel();
