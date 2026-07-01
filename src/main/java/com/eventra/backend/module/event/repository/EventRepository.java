@@ -27,7 +27,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 WHERE e.status = 'PUBLISHED'
                 AND (CAST(:categoryId AS uuid) IS NULL OR e.category.id = :categoryId)
                 AND (CAST(:city AS string) IS NULL OR e.location.city ILIKE %:city%)
-                AND (CAST(:keyword AS string) IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :keyword, '%')))
+                AND (CAST(:keyword AS string) IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', CAST(:keyword AS string), '%')))
                 AND (CAST(:from AS timestamp) IS NULL OR e.dateTime >= :from)
                 AND (CAST(:to AS timestamp) IS NULL OR e.dateTime <= :to)
                 """)
