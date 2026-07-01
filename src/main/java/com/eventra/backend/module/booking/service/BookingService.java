@@ -113,6 +113,35 @@ public class BookingService {
                 .map(BookingResponse::from);
     }
 
+    @Transactional
+    public void cancelBooking(UUID attendeeId, UUID bookingId) {
+        Booking booking = bookingRepository.findByIdAndAttendeeId(bookingId, attendeeId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "BOOKING_NOT_FOUND", "Booking not found"));
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "ALREADY_CANCELLED", "Booking is already cancelled");
+        }
+
+        var event = eventRepository.findById(booking.getEventId())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
+                        "EVENT_NOT_FOUND", "Event not found"));
+        if (event.getDateTime().isBefore(Instant.now())) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "EVENT_ALREADY_PASSED", "Cannot cancel a booking for an event that has already happened");
+        }
+
+        booking.cancel();
+        booking.getItems().forEach(item ->
+                ticketRepository.findByIdForUpdate(item.getTicketId()).ifPresent(ticket -> {
+                    ticket.release(item.getQuantity());
+                    ticketRepository.save(ticket);
+                })
+        );
+        bookingRepository.save(booking);
+    }
+
     @Transactional(readOnly = true)
     public List<BookingResponse> getEventBookings(UUID organizerId, UUID eventId) {
         assertEventOwner(eventId, organizerId);

@@ -50,6 +50,15 @@ public class BookingController {
         return bookingService.getMyBookings(principal.userId(), page, size);
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ATTENDEE')")
+    public MessageResponse cancelBooking(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable UUID id) {
+        bookingService.cancelBooking(principal.userId(), id);
+        return new MessageResponse("Booking cancelled");
+    }
+
     @GetMapping("/event/{eventId}")
     @PreAuthorize("hasRole('ORGANIZER')")
     public List<BookingResponse> eventBookings(
