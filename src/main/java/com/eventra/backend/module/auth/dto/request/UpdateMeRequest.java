@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
 import java.util.Map;
 
 public record UpdateMeRequest(
@@ -23,6 +24,13 @@ public record UpdateMeRequest(
         String languagePreference,
 
         @JsonProperty("notification_preferences")
-        Map<String, Object> notificationPreferences
+        Map<String, Object> notificationPreferences,
+
+        String city,
+
+        List<String> interests,
+
+        @JsonProperty("onboarding_completed")
+        Boolean onboardingCompleted
 ) {
 }

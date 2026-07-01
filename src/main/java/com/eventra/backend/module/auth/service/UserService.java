@@ -47,6 +47,9 @@ public class UserService {
         if (request.profilePictureUrl() != null) user.setProfilePictureUrl(request.profilePictureUrl().isBlank() ? null : request.profilePictureUrl());
         if (request.languagePreference() != null) user.setLanguagePreference(request.languagePreference());
         if (request.notificationPreferences() != null) user.setNotificationPreferences(request.notificationPreferences());
+        if (request.city() != null) user.setCity(request.city().isBlank() ? null : request.city());
+        if (request.interests() != null) user.setInterests(request.interests());
+        if (request.onboardingCompleted() != null) user.setOnboardingCompleted(request.onboardingCompleted());
         return UserResponse.from(user);
     }
 

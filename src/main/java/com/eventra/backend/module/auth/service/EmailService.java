@@ -16,11 +16,13 @@ public class EmailService {
     }
 
     public void sendVerificationEmail(String email, String rawToken) {
-        send(email, "Verify your Eventra email", properties.frontendUrl() + "/verify-email?token=" + rawToken);
+        // Path param, not query param — matches the frontend's /verify-email/:token route
+        send(email, "Verify your Eventra email", properties.frontendUrl() + "/verify-email/" + rawToken);
     }
 
     public void sendPasswordResetEmail(String email, String rawToken) {
-        send(email, "Reset your Eventra password", properties.frontendUrl() + "/reset-password?token=" + rawToken);
+        // Path param, not query param — matches the frontend's /reset-password/:token route
+        send(email, "Reset your Eventra password", properties.frontendUrl() + "/reset-password/" + rawToken);
     }
 
     private void send(String to, String subject, String body) {
