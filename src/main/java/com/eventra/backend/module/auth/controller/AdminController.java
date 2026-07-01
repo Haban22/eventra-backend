@@ -4,6 +4,8 @@ package com.eventra.backend.module.auth.controller;
 import com.eventra.backend.module.auth.dto.request.AdminReasonRequest;
 import com.eventra.backend.module.auth.dto.request.SuspendUserRequest;
 import com.eventra.backend.module.auth.dto.response.*;
+import com.eventra.backend.module.auth.entity.UserRole;
+import com.eventra.backend.module.auth.entity.UserStatus;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.auth.service.AdminService;
 import com.eventra.backend.module.auth.dto.request.SuspendUserRequest;
@@ -26,6 +28,15 @@ public class AdminController {
 
     public AdminController(AdminService adminService) {
         this.adminService = adminService;
+    }
+
+    @GetMapping("/users")
+    public PageResponse<UserResponse> listUsers(
+            @RequestParam(required = false) UserRole role,
+            @RequestParam(required = false) UserStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return adminService.listUsers(role, status, page, size);
     }
 
     @GetMapping("/organizers/pending")
