@@ -237,6 +237,20 @@ public class EventService {
                 })
                 .toList();
     }
+
+    /** Admin-only: list events in a given status (e.g. PENDING_APPROVAL moderation queue). */
+    @Transactional(readOnly = true)
+    public List<EventResponse> getEventsByStatus(EventStatus status) {
+        List<Event> events = eventRepository.findByStatus(status);
+        Map<UUID, OrganizerInfo> organizers = resolveOrganizers(events.stream().map(Event::getOrganizerId).toList());
+        return events.stream()
+                .map(event -> {
+                    OrganizerInfo organizer = organizers.getOrDefault(event.getOrganizerId(), OrganizerInfo.EMPTY);
+                    return EventResponse.from(event, organizer.name(), organizer.avatarUrl(), organizer.verified());
+                })
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public Page<EventSummaryResponse> searchEvents(EventSearchRequest request, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("dateTime").ascending());
