@@ -33,7 +33,11 @@ public class SecurityConfig {
             "/api/auth/refresh",
             "/api/ai/**",
             "/v3/api-docs/**",
-            "/swagger-ui/**"
+            "/swagger-ui/**",
+            // The SockJS handshake itself is unauthenticated HTTP — real auth happens on
+            // the STOMP CONNECT frame (StompAuthChannelInterceptor), which runs on a
+            // separate message channel this filter chain doesn't see.
+            "/ws/**"
     };
 
     private final CorsProperties corsProperties;
