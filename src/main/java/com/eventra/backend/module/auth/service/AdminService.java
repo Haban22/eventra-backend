@@ -7,6 +7,7 @@ import com.eventra.backend.module.auth.entity.UserStatus;
 import com.eventra.backend.module.auth.exception.ApiException;
 import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
 import com.eventra.backend.module.auth.repository.UserRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,23 @@ public class AdminService {
                 .map(profile -> OrganizerSummaryResponse.from(profile.getUser(), profile))
                 .toList();
         return new PageResponse<>(data, profiles.getTotalElements(), page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> listUsers(UserRole role, UserStatus status, int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        Page<User> users;
+        if (role != null && status != null) {
+            users = userRepository.findByRoleAndStatus(role, status, pageable);
+        } else if (role != null) {
+            users = userRepository.findByRole(role, pageable);
+        } else if (status != null) {
+            users = userRepository.findByStatus(status, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+        var data = users.map(UserResponse::from).getContent();
+        return new PageResponse<>(data, users.getTotalElements(), page, size);
     }
 
     @Transactional(readOnly = true)
