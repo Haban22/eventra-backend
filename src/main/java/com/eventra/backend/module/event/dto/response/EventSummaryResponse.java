@@ -7,6 +7,9 @@ import java.util.UUID;
 
 public record EventSummaryResponse(
         UUID id,
+        UUID organizerId,
+        String organizerName,
+        String organizerAvatarUrl,
         String title,
         String coverImageUrl,
         Instant dateTime,
@@ -15,9 +18,12 @@ public record EventSummaryResponse(
         CategoryResponse category,
         int capacityAvailable
 ) {
-    public static EventSummaryResponse from(Event e) {
+    public static EventSummaryResponse from(Event e, String organizerName, String organizerAvatarUrl) {
         return new EventSummaryResponse(
                 e.getId(),
+                e.getOrganizerId(),
+                organizerName,
+                organizerAvatarUrl,
                 e.getTitle(),
                 e.getCoverImageUrl(),
                 e.getDateTime(),

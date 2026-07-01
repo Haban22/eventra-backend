@@ -1,6 +1,9 @@
 package com.eventra.backend.module.event.service;
 
+import com.eventra.backend.module.auth.entity.User;
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
+import com.eventra.backend.module.auth.repository.UserRepository;
 import com.eventra.backend.module.event.dto.request.EventRequest;
 import com.eventra.backend.module.event.dto.request.EventSearchRequest;
 import com.eventra.backend.module.event.dto.response.EventResponse;
@@ -22,22 +25,58 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
 
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
-
     private final EventApprovalRepository approvalRepository;
+    private final UserRepository userRepository;
+    private final OrganizerProfileRepository organizerProfileRepository;
 
     public EventService(EventRepository eventRepository,
                         CategoryRepository categoryRepository,
-                        EventApprovalRepository approvalRepository) {
+                        EventApprovalRepository approvalRepository,
+                        UserRepository userRepository,
+                        OrganizerProfileRepository organizerProfileRepository) {
         this.eventRepository = eventRepository;
         this.categoryRepository = categoryRepository;
         this.approvalRepository = approvalRepository;
+        this.userRepository = userRepository;
+        this.organizerProfileRepository = organizerProfileRepository;
+    }
+
+    /** Publicly-displayable organizer info attached to every event response. */
+    private record OrganizerInfo(String name, String avatarUrl, boolean verified) {
+        static final OrganizerInfo EMPTY = new OrganizerInfo(null, null, false);
+    }
+
+    private OrganizerInfo resolveOrganizer(UUID organizerId) {
+        return userRepository.findById(organizerId)
+                .map(user -> new OrganizerInfo(
+                        user.getFullName(),
+                        user.getProfilePictureUrl(),
+                        organizerProfileRepository.findByUserId(organizerId).map(p -> p.isVerified()).orElse(false)
+                ))
+                .orElse(OrganizerInfo.EMPTY);
+    }
+
+    private Map<UUID, OrganizerInfo> resolveOrganizers(List<UUID> organizerIds) {
+        List<UUID> distinctIds = organizerIds.stream().distinct().toList();
+        Map<UUID, User> usersById = userRepository.findAllById(distinctIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+        Map<UUID, Boolean> verifiedById = organizerProfileRepository.findByUserIdIn(distinctIds).stream()
+                .collect(Collectors.toMap(p -> p.getUser().getId(), p -> p.isVerified()));
+        return distinctIds.stream().collect(Collectors.toMap(id -> id, id -> {
+            User user = usersById.get(id);
+            if (user == null) return OrganizerInfo.EMPTY;
+            return new OrganizerInfo(user.getFullName(), user.getProfilePictureUrl(),
+                    verifiedById.getOrDefault(id, false));
+        }));
     }
 
     @Transactional
@@ -74,12 +113,16 @@ public class EventService {
         event.setCapacity(capacity);
         event.setTags(request.tags() != null ? request.tags() : new ArrayList<>());
 
-        return EventResponse.from(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+        OrganizerInfo organizer = resolveOrganizer(organizerId);
+        return EventResponse.from(saved, organizer.name(), organizer.avatarUrl(), organizer.verified());
     }
 
     @Transactional(readOnly = true)
     public EventResponse getEvent(UUID eventId) {
-        return EventResponse.from(findEventOrThrow(eventId));
+        Event event = findEventOrThrow(eventId);
+        OrganizerInfo organizer = resolveOrganizer(event.getOrganizerId());
+        return EventResponse.from(event, organizer.name(), organizer.avatarUrl(), organizer.verified());
     }
 
     @Transactional
@@ -117,7 +160,9 @@ public class EventService {
         event.setCapacity(capacity);
         event.setTags(request.tags() != null ? request.tags() : new ArrayList<>());
 
-        return EventResponse.from(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+        OrganizerInfo organizer = resolveOrganizer(organizerId);
+        return EventResponse.from(saved, organizer.name(), organizer.avatarUrl(), organizer.verified());
     }
 
     @Transactional
@@ -126,7 +171,9 @@ public class EventService {
         assertOwner(event, organizerId);
         assertEditable(event);
         event.publish();
-        return EventResponse.from(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+        OrganizerInfo organizer = resolveOrganizer(organizerId);
+        return EventResponse.from(saved, organizer.name(), organizer.avatarUrl(), organizer.verified());
     }
 
     @Transactional
@@ -158,7 +205,9 @@ public class EventService {
         capacity.setReserved(0);
         copy.setCapacity(capacity);
 
-        return EventResponse.from(eventRepository.save(copy));
+        Event saved = eventRepository.save(copy);
+        OrganizerInfo organizer = resolveOrganizer(organizerId);
+        return EventResponse.from(saved, organizer.name(), organizer.avatarUrl(), organizer.verified());
     }
 
     @Transactional
@@ -175,30 +224,36 @@ public class EventService {
 
     @Transactional(readOnly = true)
     public List<EventResponse> getOrganizerEvents(UUID organizerId) {
+        OrganizerInfo organizer = resolveOrganizer(organizerId);
         return eventRepository.findByOrganizerId(organizerId)
                 .stream()
                 .map(event -> {
                     if (event.getStatus() == EventStatus.DRAFT) {
                         return approvalRepository.findByEventId(event.getId())
-                                .map(approval -> EventResponse.from(event, approval.getFeedback()))
-                                .orElseGet(() -> EventResponse.from(event));
+                                .map(approval -> EventResponse.from(event, organizer.name(), organizer.avatarUrl(), organizer.verified(), approval.getFeedback()))
+                                .orElseGet(() -> EventResponse.from(event, organizer.name(), organizer.avatarUrl(), organizer.verified()));
                     }
-                    return EventResponse.from(event);
+                    return EventResponse.from(event, organizer.name(), organizer.avatarUrl(), organizer.verified());
                 })
                 .toList();
     }
     @Transactional(readOnly = true)
     public Page<EventSummaryResponse> searchEvents(EventSearchRequest request, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("dateTime").ascending());
-        return eventRepository.searchEvents(
-                        request.categoryId(),
-                        request.city(),
-                        request.keyword(),
-                        request.from(),
-                        request.to(),
-                        pageable
-                )
-                .map(EventSummaryResponse::from);
+        Page<Event> events = eventRepository.searchEvents(
+                request.categoryId(),
+                request.city(),
+                request.keyword(),
+                request.from(),
+                request.to(),
+                pageable
+        );
+        Map<UUID, OrganizerInfo> organizers = resolveOrganizers(
+                events.getContent().stream().map(Event::getOrganizerId).toList());
+        return events.map(event -> {
+            OrganizerInfo organizer = organizers.getOrDefault(event.getOrganizerId(), OrganizerInfo.EMPTY);
+            return EventSummaryResponse.from(event, organizer.name(), organizer.avatarUrl());
+        });
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 package com.eventra.backend.module.event.service;
 
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.UserRepository;
 import com.eventra.backend.module.event.dto.response.EventSummaryResponse;
 import com.eventra.backend.module.event.entity.Bookmark;
 import com.eventra.backend.module.event.repository.BookmarkRepository;
@@ -19,11 +20,14 @@ public class BookmarkService {
 
     private final BookmarkRepository bookmarkRepository;
     private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     public BookmarkService(BookmarkRepository bookmarkRepository,
-                           EventRepository eventRepository) {
+                           EventRepository eventRepository,
+                           UserRepository userRepository) {
         this.bookmarkRepository = bookmarkRepository;
         this.eventRepository = eventRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -59,7 +63,12 @@ public class BookmarkService {
 
         return bookmarkRepository.findByUserId(userId, pageable)
                 .map(bookmark -> eventRepository.findById(bookmark.getEventId())
-                        .map(EventSummaryResponse::from)
+                        .map(event -> {
+                            var organizer = userRepository.findById(event.getOrganizerId());
+                            return EventSummaryResponse.from(event,
+                                    organizer.map(com.eventra.backend.module.auth.entity.User::getFullName).orElse(null),
+                                    organizer.map(com.eventra.backend.module.auth.entity.User::getProfilePictureUrl).orElse(null));
+                        })
                         .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,
                                 "EVENT_NOT_FOUND", "Event not found")));
     }
