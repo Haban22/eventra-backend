@@ -23,8 +23,17 @@ public class AdminAuditLog {
     @Column(name = "admin_user_id", nullable = false)
     private UUID adminUserId;
 
-    @Column(name = "target_user_id", nullable = false)
+    // Nullable since V9 generalized this table beyond user-targeted actions — see
+    // targetType/targetId below, which cover any target kind uniformly (including
+    // "user", backfilled from this column for pre-V9 rows).
+    @Column(name = "target_user_id")
     private UUID targetUserId;
+
+    @Column(name = "target_type")
+    private String targetType;
+
+    @Column(name = "target_id")
+    private String targetId;
 
     @Column(name = "action_type", nullable = false)
     private String actionType;

@@ -5,6 +5,7 @@ import com.eventra.backend.module.wallet.dto.PayoutRequestResponse;
 import com.eventra.backend.module.wallet.dto.RejectPayoutRequest;
 import com.eventra.backend.module.wallet.enums.PayoutStatus;
 import com.eventra.backend.module.wallet.service.WalletService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,12 +33,12 @@ public class AdminWalletController {
     }
 
     @PatchMapping("/payout-requests/{id}/approve")
-    public PayoutRequestResponse approve(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID id) {
-        return walletService.approvePayoutRequest(id, null);
+    public PayoutRequestResponse approve(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID id, HttpServletRequest request) {
+        return walletService.approvePayoutRequest(principal.userId(), id, null, request.getRemoteAddr());
     }
 
     @PatchMapping("/payout-requests/{id}/reject")
-    public PayoutRequestResponse reject(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID id, @Valid @RequestBody RejectPayoutRequest request) {
-        return walletService.rejectPayoutRequest(id, request.reason());
+    public PayoutRequestResponse reject(@AuthenticationPrincipal AuthPrincipal principal, @PathVariable UUID id, @Valid @RequestBody RejectPayoutRequest request, HttpServletRequest httpRequest) {
+        return walletService.rejectPayoutRequest(principal.userId(), id, request.reason(), httpRequest.getRemoteAddr());
     }
 }

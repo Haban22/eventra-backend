@@ -77,12 +77,8 @@ public class SystemConfigService {
         config.setUpdatedAt(Instant.now());
         SystemConfig saved = repository.save(config);
 
-        // admin_audit_logs.target_user_id is NOT NULL and has no generic
-        // "target type" column yet (planned for a later audit-log
-        // generalization pass) — using the admin's own id as the target is a
-        // reasonable placeholder for a config-wide (not per-user) action.
         if (changes.length() > 0) {
-            auditService.log(adminId, adminId, "SYSTEM_CONFIG_UPDATED", null, null, changes.toString(), ipAddress);
+            auditService.logGeneric(adminId, "config", "system", "SYSTEM_CONFIG_UPDATED", changes.toString(), ipAddress);
         }
 
         return SystemConfigResponse.from(saved);

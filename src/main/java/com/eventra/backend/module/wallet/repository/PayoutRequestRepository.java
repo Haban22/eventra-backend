@@ -12,4 +12,5 @@ public interface PayoutRequestRepository extends JpaRepository<PayoutRequest, UU
     Page<PayoutRequest> findByOrganizerIdOrderByRequestedAtDesc(UUID organizerId, Pageable pageable);
     Page<PayoutRequest> findByStatusOrderByRequestedAtDesc(PayoutStatus status, Pageable pageable);
     Page<PayoutRequest> findAllByOrderByRequestedAtDesc(Pageable pageable);
+    long countByStatus(PayoutStatus status);
 }

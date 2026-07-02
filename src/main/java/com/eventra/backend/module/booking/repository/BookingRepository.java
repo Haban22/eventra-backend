@@ -35,4 +35,11 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     // Count confirmed bookings for an event
     long countByEventIdAndStatus(UUID eventId, BookingStatus status);
+
+    long countByStatus(BookingStatus status);
+
+    @Query("SELECT COALESCE(SUM(b.totalAmount.amount), 0) FROM Booking b WHERE b.status = :status")
+    java.math.BigDecimal sumTotalAmountByStatus(@Param("status") BookingStatus status);
+
+    List<Booking> findByStatusAndCreatedAtAfter(BookingStatus status, Instant after);
 }

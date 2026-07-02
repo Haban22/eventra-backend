@@ -3,6 +3,7 @@ package com.eventra.backend.module.community.controller;
 import com.eventra.backend.common.response.ApiResponse;
 import com.eventra.backend.module.community.dto.*;
 import com.eventra.backend.module.community.service.ModerationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,21 +35,24 @@ public class AdminCommunityController {
     @PostMapping("/flagged/{id}/approve")
     public ResponseEntity<ApiResponse<FlaggedContentResponse>> approveContent(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(moderationService.approveContent(id, principal.userId())));
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(moderationService.approveContent(id, principal.userId(), request.getRemoteAddr())));
     }
 
     @PostMapping("/flagged/{id}/remove")
     public ResponseEntity<ApiResponse<FlaggedContentResponse>> removeContent(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(moderationService.removeContent(id, principal.userId())));
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(moderationService.removeContent(id, principal.userId(), request.getRemoteAddr())));
     }
 
     @PostMapping("/flagged/{id}/warn")
     public ResponseEntity<ApiResponse<FlaggedContentResponse>> warnUser(
             @AuthenticationPrincipal AuthPrincipal principal,
-            @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(moderationService.warnUser(id, principal.userId())));
+            @PathVariable Long id,
+            HttpServletRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(moderationService.warnUser(id, principal.userId(), request.getRemoteAddr())));
     }
 }

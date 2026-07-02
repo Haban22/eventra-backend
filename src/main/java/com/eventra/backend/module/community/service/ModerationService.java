@@ -1,6 +1,7 @@
 package com.eventra.backend.module.community.service;
 
 import com.eventra.backend.common.exception.ResourceNotFoundException;
+import com.eventra.backend.module.auth.service.AuditService;
 import com.eventra.backend.module.community.dto.FlagContentRequest;
 import com.eventra.backend.module.community.dto.FlaggedContentResponse;
 import com.eventra.backend.module.community.dto.ModerationStatsResponse;
@@ -29,6 +30,7 @@ public class ModerationService {
     private final FlaggedContentRepository flaggedContentRepository;
     private final DiscussionRepository discussionRepository;
     private final DiscussionReplyRepository replyRepository;
+    private final AuditService auditService;
 
     public ModerationStatsResponse getFlaggedContent() {
         List<FlaggedContent> allFlags = flaggedContentRepository.findAllByOrderByCreatedAtDesc();
@@ -71,16 +73,17 @@ public class ModerationService {
     }
 
     @Transactional
-    public FlaggedContentResponse approveContent(Long flagId, UUID moderatorId) {
+    public FlaggedContentResponse approveContent(Long flagId, UUID moderatorId, String ipAddress) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.APPROVED);
         f.setResolvedByUserId(moderatorId);
         f.setResolvedAt(LocalDateTime.now());
+        auditService.logGeneric(moderatorId, "content", flagId.toString(), "CONTENT_APPROVED", null, ipAddress);
         return toResponse(flaggedContentRepository.save(f));
     }
 
     @Transactional
-    public FlaggedContentResponse removeContent(Long flagId, UUID moderatorId) {
+    public FlaggedContentResponse removeContent(Long flagId, UUID moderatorId, String ipAddress) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.REMOVED);
         f.setResolvedByUserId(moderatorId);
@@ -96,15 +99,17 @@ public class ModerationService {
                     .ifPresent(r -> { r.setActive(false); replyRepository.save(r); });
         }
 
+        auditService.logGeneric(moderatorId, "content", flagId.toString(), "CONTENT_REMOVED", f.getReason(), ipAddress);
         return toResponse(f);
     }
 
     @Transactional
-    public FlaggedContentResponse warnUser(Long flagId, UUID moderatorId) {
+    public FlaggedContentResponse warnUser(Long flagId, UUID moderatorId, String ipAddress) {
         FlaggedContent f = findFlag(flagId);
         f.setStatus(FlagStatus.WARNED);
         f.setResolvedByUserId(moderatorId);
         f.setResolvedAt(LocalDateTime.now());
+        auditService.logGeneric(moderatorId, "content", flagId.toString(), "CONTENT_WARNED", f.getReason(), ipAddress);
         return toResponse(flaggedContentRepository.save(f));
     }
 

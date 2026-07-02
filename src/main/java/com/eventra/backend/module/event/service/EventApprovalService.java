@@ -10,6 +10,7 @@ import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.repository.EventApprovalRepository;
 import com.eventra.backend.module.event.repository.EventRepository;
 import com.eventra.backend.module.notification.service.NotificationService;
+import com.eventra.backend.module.auth.service.AuditService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,18 +24,21 @@ public class EventApprovalService {
     private final EventRepository eventRepository;
     private final EventApprovalRepository approvalRepository;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     public EventApprovalService(EventRepository eventRepository,
                                 EventApprovalRepository approvalRepository,
-                                NotificationService notificationService) {
+                                NotificationService notificationService,
+                                AuditService auditService) {
         this.eventRepository = eventRepository;
         this.approvalRepository = approvalRepository;
         this.notificationService = notificationService;
+        this.auditService = auditService;
     }
 
     @Transactional
     public EventApprovalResponse approveEvent(UUID adminId, UUID eventId,
-                                              EventApprovalRequest request) {
+                                              EventApprovalRequest request, String ipAddress) {
         Event event = findEventOrThrow(eventId);
 
         if (event.getStatus() != EventStatus.PENDING_APPROVAL) {
@@ -56,12 +60,14 @@ public class EventApprovalService {
                     "Event Approved! 🎉",
                     "\"" + event.getTitle() + "\" has been approved and is now live.",
                     "/organizer/events/" + event.getId());
+            auditService.logGeneric(adminId, "event", eventId.toString(), "EVENT_APPROVED", null, ipAddress);
         } else if (request.status() == ApprovalStatus.REJECTED) {
             event.setStatus(EventStatus.DRAFT);
             notificationService.notify(event.getOrganizerId(), "event_rejected",
                     "Event Needs Changes",
                     "\"" + event.getTitle() + "\" was not approved." + (request.feedback() != null ? " Feedback: " + request.feedback() : ""),
                     "/organizer/events/" + event.getId());
+            auditService.logGeneric(adminId, "event", eventId.toString(), "EVENT_REJECTED", request.feedback(), ipAddress);
         } else {
             event.setStatus(EventStatus.DRAFT);
         }
