@@ -68,7 +68,10 @@ public class AuthService {
         if (request.city() != null) user.setCity(request.city());
         if (request.interests() != null) user.setInterests(request.interests());
         userRepository.save(user);
+        
+        if (!appProperties.skipEmailVerification()) {
         createVerificationTokenAndSend(user);
+    }
     }
 
     @Transactional
@@ -89,7 +92,10 @@ public class AuthService {
         profile.setExperience(request.experience());
         if (request.eventTypes() != null) profile.setEventTypes(request.eventTypes());
         organizerProfileRepository.save(profile);
+
+        if (!appProperties.skipEmailVerification()) {
         createVerificationTokenAndSend(user);
+    }
     }
 
     private User buildUser(String fullName, String email, String password, String phone, UserRole role) {
@@ -103,7 +109,13 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setPhone(phone);
         user.setRole(role);
-        user.setStatus(UserStatus.PENDING_EMAIL_VERIFICATION);
+
+        if (appProperties.skipEmailVerification()) {
+            user.setEmailVerified(true);
+            user.setStatus(role == UserRole.ORGANIZER ? UserStatus.PENDING_ADMIN_APPROVAL : UserStatus.ACTIVE);
+        } else {
+            user.setStatus(UserStatus.PENDING_EMAIL_VERIFICATION);
+        }
         return user;
     }
 
