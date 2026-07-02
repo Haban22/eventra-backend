@@ -2,6 +2,7 @@ package com.eventra.backend.module.wallet.service;
 
 import com.eventra.backend.module.auth.exception.ApiException;
 import com.eventra.backend.module.config.service.SystemConfigService;
+import com.eventra.backend.module.notification.service.NotificationService;
 import com.eventra.backend.module.wallet.dto.*;
 import com.eventra.backend.module.wallet.entity.PayoutMethod;
 import com.eventra.backend.module.wallet.entity.PayoutRequest;
@@ -34,17 +35,20 @@ public class WalletService {
     private final PayoutMethodRepository payoutMethodRepository;
     private final PayoutRequestRepository payoutRequestRepository;
     private final SystemConfigService systemConfigService;
+    private final NotificationService notificationService;
 
     public WalletService(WalletRepository walletRepository,
                          WalletTransactionRepository transactionRepository,
                          PayoutMethodRepository payoutMethodRepository,
                          PayoutRequestRepository payoutRequestRepository,
-                         SystemConfigService systemConfigService) {
+                         SystemConfigService systemConfigService,
+                         NotificationService notificationService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.payoutMethodRepository = payoutMethodRepository;
         this.payoutRequestRepository = payoutRequestRepository;
         this.systemConfigService = systemConfigService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -210,6 +214,8 @@ public class WalletService {
         request.setAdminNotes(adminNotes);
         request.setProcessedAt(Instant.now());
         payoutRequestRepository.save(request);
+        notificationService.notify(request.getOrganizerId(), "payout_approved", "Payout Approved! 💰",
+                "Your payout request for " + request.getAmount() + " has been approved.", "/organizer/wallet");
         return PayoutRequestResponse.from(request, payoutMethodRepository.findById(request.getMethodId()).orElse(null));
     }
 
@@ -231,6 +237,8 @@ public class WalletService {
         walletRepository.save(wallet);
         recordTransaction(request.getOrganizerId(), WalletTransactionType.REFUND, request.getAmount(), wallet.getBalance(),
                 "Payout rejected — funds returned", request.getId().toString());
+        notificationService.notify(request.getOrganizerId(), "payout_rejected", "Payout Request Update",
+                "Your payout request for " + request.getAmount() + " was not approved." + (reason != null ? " Reason: " + reason : ""), "/organizer/wallet");
 
         return PayoutRequestResponse.from(request, payoutMethodRepository.findById(request.getMethodId()).orElse(null));
     }

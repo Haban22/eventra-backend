@@ -8,6 +8,7 @@ import com.eventra.backend.module.auth.repository.UserRepository;
 import com.eventra.backend.module.auth.service.AdminService;
 import com.eventra.backend.module.auth.service.AuditService;
 import com.eventra.backend.module.auth.service.TokenService;
+import com.eventra.backend.module.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,12 +39,14 @@ class AdminServiceTest {
     private AuditService auditService;
     @Mock
     private TokenService tokenService;
+    @Mock
+    private NotificationService notificationService;
 
     private AdminService adminService;
 
     @BeforeEach
     void setUp() {
-        adminService = new AdminService(userRepository, organizerProfileRepository, auditService, tokenService);
+        adminService = new AdminService(userRepository, organizerProfileRepository, auditService, tokenService, notificationService);
     }
 
     @Test

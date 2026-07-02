@@ -9,6 +9,7 @@ import com.eventra.backend.module.event.enums.ApprovalStatus;
 import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.repository.EventApprovalRepository;
 import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.notification.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,11 +22,14 @@ public class EventApprovalService {
 
     private final EventRepository eventRepository;
     private final EventApprovalRepository approvalRepository;
+    private final NotificationService notificationService;
 
     public EventApprovalService(EventRepository eventRepository,
-                                EventApprovalRepository approvalRepository) {
+                                EventApprovalRepository approvalRepository,
+                                NotificationService notificationService) {
         this.eventRepository = eventRepository;
         this.approvalRepository = approvalRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -48,8 +52,16 @@ public class EventApprovalService {
 
         if (request.status() == ApprovalStatus.APPROVED) {
             event.approve();
+            notificationService.notify(event.getOrganizerId(), "event_approved",
+                    "Event Approved! 🎉",
+                    "\"" + event.getTitle() + "\" has been approved and is now live.",
+                    "/organizer/events/" + event.getId());
         } else if (request.status() == ApprovalStatus.REJECTED) {
             event.setStatus(EventStatus.DRAFT);
+            notificationService.notify(event.getOrganizerId(), "event_rejected",
+                    "Event Needs Changes",
+                    "\"" + event.getTitle() + "\" was not approved." + (request.feedback() != null ? " Feedback: " + request.feedback() : ""),
+                    "/organizer/events/" + event.getId());
         } else {
             event.setStatus(EventStatus.DRAFT);
         }
