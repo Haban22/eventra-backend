@@ -7,6 +7,7 @@ import com.eventra.backend.module.auth.entity.UserStatus;
 import com.eventra.backend.module.auth.exception.ApiException;
 import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
 import com.eventra.backend.module.auth.repository.UserRepository;
+import com.eventra.backend.module.notification.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,14 @@ public class AdminService {
     private final OrganizerProfileRepository organizerProfileRepository;
     private final AuditService auditService;
     private final TokenService tokenService;
+    private final NotificationService notificationService;
 
-    public AdminService(UserRepository userRepository, OrganizerProfileRepository organizerProfileRepository, AuditService auditService, TokenService tokenService) {
+    public AdminService(UserRepository userRepository, OrganizerProfileRepository organizerProfileRepository, AuditService auditService, TokenService tokenService, NotificationService notificationService) {
         this.userRepository = userRepository;
         this.organizerProfileRepository = organizerProfileRepository;
         this.auditService = auditService;
         this.tokenService = tokenService;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -77,6 +80,8 @@ public class AdminService {
         profile.setApprovedBy(adminId);
         profile.setApprovedAt(Instant.now());
         auditService.log(adminId, id, "ORGANIZER_APPROVED", previous, UserStatus.ACTIVE, null, ipAddress);
+        notificationService.notify(id, "organizer_approved", "Organizer Request Approved! 🎉",
+                "Your request to become an organizer has been approved.", "/organizer/dashboard");
     }
 
     @Transactional
@@ -94,6 +99,8 @@ public class AdminService {
         var profile = organizerProfileRepository.findByUserId(id).orElseThrow();
         profile.setRejectionReason(reason);
         auditService.log(adminId, id, "ORGANIZER_REJECTED", previous, user.getStatus(), reason, ipAddress);
+        notificationService.notify(id, "organizer_rejected", "Organizer Request Update",
+                "Your organizer request was not approved at this time." + (reason != null ? " Reason: " + reason : ""), "/app/messages");
     }
 
     @Transactional
@@ -135,6 +142,8 @@ public class AdminService {
         user.setMustResetPassword(true);
         tokenService.bulkRevokeAndBlacklist(user);
         auditService.log(adminId, id, "FORCE_PASSWORD_RESET", user.getStatus(), user.getStatus(), null, ipAddress);
+        notificationService.notify(id, "force_password_reset", "Password Reset Required",
+                "An admin has required you to reset your password on next login.", "/reset-password");
     }
 
     @Transactional

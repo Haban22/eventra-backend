@@ -10,6 +10,7 @@ import com.eventra.backend.module.gamification.repository.PointsTransactionRepos
 import com.eventra.backend.module.gamification.repository.RewardsRepository;
 import com.eventra.backend.module.gamification.valueobject.Level;
 import com.eventra.backend.module.gamification.valueobject.Streak;
+import com.eventra.backend.module.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class RewardsService {
     private final PointsTransactionRepository pointsTransactionRepository;
     private final BadgeService badgeService;
     private final LeaderboardService leaderboardService;
+    private final NotificationService notificationService;
 
     /**
      * Awards XP/points for a gamification action, updates streak, checks badges, and refreshes leaderboard.
@@ -92,6 +94,8 @@ public class RewardsService {
                         "BADGE_BONUS", badge.getId().toString(),
                         "Badge unlocked: " + badge.getName());
             }
+            notificationService.notify(profile.getUserId(), "badge_earned", "Badge Unlocked! 🏆",
+                    "You earned the \"" + badge.getName() + "\" badge.", "/app/rewards");
         }
 
         // Refresh cached ALL_TIME leaderboard entry

@@ -11,6 +11,7 @@ import com.eventra.backend.module.booking.gateway.StripeGateway;
 import com.eventra.backend.module.booking.repository.BookingRepository;
 import com.eventra.backend.module.booking.repository.PaymentRepository;
 import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.notification.service.NotificationService;
 import com.eventra.backend.module.wallet.service.WalletService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,17 +27,20 @@ public class PaymentService {
     private final EventRepository eventRepository;
     private final StripeGateway stripeGateway;
     private final WalletService walletService;
+    private final NotificationService notificationService;
 
     public PaymentService(PaymentRepository paymentRepository,
                           BookingRepository bookingRepository,
                           EventRepository eventRepository,
                           StripeGateway stripeGateway,
-                          WalletService walletService) {
+                          WalletService walletService,
+                          NotificationService notificationService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.eventRepository = eventRepository;
         this.stripeGateway = stripeGateway;
         this.walletService = walletService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -79,9 +83,19 @@ public class PaymentService {
         booking.setTransactionId(transactionId);
         bookingRepository.save(booking);
 
-        // Credit the organizer's wallet with the booking total minus the platform fee
-        eventRepository.findById(booking.getEventId()).ifPresent(event ->
-                walletService.recordOrganizerEarning(event.getOrganizerId(), booking.getTotalAmount().getAmount(), booking.getId()));
+        // Credit the organizer's wallet with the booking total minus the platform fee,
+        // and notify both sides of the confirmed booking.
+        eventRepository.findById(booking.getEventId()).ifPresent(event -> {
+            walletService.recordOrganizerEarning(event.getOrganizerId(), booking.getTotalAmount().getAmount(), booking.getId());
+            notificationService.notify(booking.getAttendeeId(), "rsvp_confirmed",
+                    "Booking Confirmed! 🎉",
+                    "Your booking for \"" + event.getTitle() + "\" is confirmed.",
+                    "/app/orders/" + event.getId());
+            notificationService.notify(event.getOrganizerId(), "new_booking",
+                    "New Booking",
+                    "Someone just booked \"" + event.getTitle() + "\".",
+                    "/organizer/events/" + event.getId());
+        });
 
         return PaymentResponse.from(payment);
     }
