@@ -3,30 +3,23 @@ import json
 from sklearn.metrics.pairwise import cosine_similarity
 from models import embedding_model
 
-with open("data/events.json", "r", encoding="utf-8") as file:
-    events = json.load(file)
-
-texts = [
-    f"{event['title']} {event['description']} {event['category']}"
-    for event in events
-]
-
-embeddings = embedding_model.encode(texts)
-
 # Same-category events get a boost to prevent cross-category
 # results when scores are close
 CATEGORY_BOOST = 0.15
 
-# Minimum score � results below this are not meaningful enough
+# Minimum score – results below this are not meaningful enough
 # to recommend. Prevents returning noise for unique-category events.
 MIN_SCORE = 0.30
 
 
 def recommend_similar(event_id, limit: int = 3):
+    from ai import state
+    events = state.current_events
+    embeddings = state.similarity_embeddings
 
     target_index = None
     for i, event in enumerate(events):
-        if event["id"] == event_id:
+        if str(event["id"]) == str(event_id):
             target_index = i
             break
 
@@ -42,7 +35,7 @@ def recommend_similar(event_id, limit: int = 3):
 
     recommendations = []
     for i, score in enumerate(similarities):
-        if events[i]["id"] != event_id:
+        if str(events[i]["id"]) != str(event_id):
             boost      = CATEGORY_BOOST if events[i]["category"].lower() == target_category else 0.0
             final_score = float(score) + boost
 

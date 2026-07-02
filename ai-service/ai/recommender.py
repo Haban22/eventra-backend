@@ -25,15 +25,15 @@ def has_interest(user, event):
 def interaction_bonus(user_id, event_id):
     """
     Gives a small bonus based on previous interactions.
-    liked    ? +0.20 (strongest signal)
-    registered ? +0.15 (committed action)
-    saved    ? +0.10 (bookmarked for later)
-    viewed   ? +0.05 (weakest signal)
+    liked    ➔ +0.20 (strongest signal)
+    registered ➔ +0.15 (committed action)
+    saved    ➔ +0.10 (bookmarked for later)
+    viewed   ➔ +0.05 (weakest signal)
     """
     for interaction in interactions:
         if (
-            interaction["user_id"] == user_id
-            and interaction["event_id"] == event_id
+            str(interaction["user_id"]) == str(user_id)
+            and str(interaction["event_id"]) == str(event_id)
         ):
             action = interaction["action"]
             if action == "liked":       return 0.20

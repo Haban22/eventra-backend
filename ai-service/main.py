@@ -21,8 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-with open("data/events.json", "r", encoding="utf-8") as file:
-    events = json.load(file)
+from ai import state
 
 # ===============================
 # Load Models
@@ -152,25 +151,37 @@ def health():
 
 # For the new Eventra AI tests:
 @app.post("/user-recommendations")  
-def recommend_user_new(user_id: int):
-    if user_id not in users:
+def recommend_user_new(user_id: str):
+    # Support both integer keys (mock data) and string/UUID keys
+    try:
+        user_key = int(user_id)
+    except ValueError:
+        user_key = user_id
+
+    if user_key not in users:
         raise HTTPException(status_code=404, detail="User not found")
-    user = users[user_id]
-    return recommend_events(user, user_id, events)
+    user = users[user_key]
+    return recommend_events(user, user_key, state.current_events)
 
 # For the Java Backend:
 @app.post("/recommendations/user")
 def recommend_user_backend(req: UserRecommendationRequest):
-    return recommend_events_for_backend(req.interests, req.interactions, events, req.limit)
+    return recommend_events_for_backend(req.interests, req.interactions, state.current_events, req.limit)
+
+# Dynamic Event Synchronization Endpoint:
+@app.post("/events/sync")
+def sync_events(events_list: list[dict]):
+    state.update_events_state(events_list)
+    return {"status": "success", "synced_events_count": len(events_list)}
 
 # For the new Eventra AI tests:
 @app.get("/recommend/{event_id}")
-def recommend_similar_new(event_id: int):
+def recommend_similar_new(event_id: str):
     return recommend_similar(event_id)
 
 # For the Java Backend:
 @app.get("/recommendations/events/{event_id}")
-def recommend_similar_backend(event_id: int, limit: int = 3):
+def recommend_similar_backend(event_id: str, limit: int = 3):
     return recommend_similar(event_id, limit=limit)
 
 # --- Sentiment Analysis ---

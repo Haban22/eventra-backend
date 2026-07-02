@@ -2,22 +2,14 @@ import json
 from sklearn.metrics.pairwise import cosine_similarity
 from models import embedding_model
 
-with open("data/events.json", "r", encoding="utf-8") as file:
-    events = json.load(file)
-
-# Build embeddings once � title doubled for higher weight
-texts = [
-    f"{event['title']} {event['title']} {event['description']} {event['category']} {event['location']}"
-    for event in events
-]
-
-embeddings = embedding_model.encode(texts)
-
 # Raised from 0.25 to 0.30 to match recommender threshold
 SEMANTIC_THRESHOLD = 0.30
 
 
 def search_events(query: str, limit: int = 5):
+    from ai import state
+    events = state.current_events
+    embeddings = state.search_embeddings
 
     # Validate
     if not query or query.strip() == "":
