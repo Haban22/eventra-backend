@@ -1,11 +1,13 @@
 package com.eventra.backend.module.auth.controller;
 
 import com.eventra.backend.module.auth.dto.request.OrganizerUpgradeRequest;
+import com.eventra.backend.module.auth.dto.request.OtpVerifyRequest;
 import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
 import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
 import com.eventra.backend.module.auth.dto.response.MessageResponse;
 import com.eventra.backend.module.auth.dto.response.UserResponse;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
+import com.eventra.backend.module.auth.service.OtpService;
 import com.eventra.backend.module.auth.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final OtpService otpService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, OtpService otpService) {
         this.userService = userService;
+        this.otpService  = otpService;
     }
 
     @GetMapping("/me")
@@ -44,5 +48,20 @@ public class UserController {
     public MessageResponse changePassword(@AuthenticationPrincipal AuthPrincipal principal, @Valid @RequestBody PasswordChangeRequest request) {
         userService.changePassword(principal.userId(), principal.jti(), principal.expiresAtEpochSeconds(), request);
         return new MessageResponse("Password updated");
+    }
+
+    // ── Organizer onboarding OTP ──────────────────────────────────────────────
+
+    @PostMapping("/me/onboarding/otp/request")
+    public MessageResponse requestOrganizerOtp(@AuthenticationPrincipal AuthPrincipal principal) {
+        otpService.requestOrganizerOtp(principal.userId());
+        return new MessageResponse("OTP sent to your registered email");
+    }
+
+    @PostMapping("/me/onboarding/otp/verify")
+    public MessageResponse verifyOrganizerOtp(@AuthenticationPrincipal AuthPrincipal principal,
+                                               @Valid @RequestBody OtpVerifyRequest request) {
+        otpService.verifyOrganizerOtp(principal.userId(), request.otp());
+        return new MessageResponse("Email verified");
     }
 }

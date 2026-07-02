@@ -38,13 +38,15 @@ public class AuthService {
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final TransactionTemplate transactionTemplate;
     private final com.eventra.backend.module.auth.config.AppProperties appProperties;
+    private final OtpService otpService;
 
     public AuthService(UserRepository userRepository, OrganizerProfileRepository organizerProfileRepository,
                        EmailVerificationTokenRepository emailTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository,
                        RefreshTokenRepository refreshTokenRepository, AuthProviderRepository authProviderRepository,
                        PasswordEncoder passwordEncoder, EmailService emailService, RateLimitService rateLimitService,
                        TokenService tokenService, JwtUtil jwtUtil, GoogleIdTokenVerifier googleIdTokenVerifier,
-                       TransactionTemplate transactionTemplate, com.eventra.backend.module.auth.config.AppProperties appProperties) {
+                       TransactionTemplate transactionTemplate, com.eventra.backend.module.auth.config.AppProperties appProperties,
+                       OtpService otpService) {
         this.userRepository = userRepository;
         this.organizerProfileRepository = organizerProfileRepository;
         this.emailTokenRepository = emailTokenRepository;
@@ -59,6 +61,7 @@ public class AuthService {
         this.googleIdTokenVerifier = googleIdTokenVerifier;
         this.transactionTemplate = transactionTemplate;
         this.appProperties = appProperties;
+        this.otpService = otpService;
     }
 
     @Transactional
@@ -162,6 +165,15 @@ public class AuthService {
         }
         user.setFailedLoginAttempts((short) 0);
         user.setLockedUntil(null);
+
+        // Admin accounts require a second factor (OTP)
+        if (user.getRole() == UserRole.ADMIN) {
+            String preAuthToken = otpService.createPreAuthToken(user.getId());
+            throw new ApiException(HttpStatus.FORBIDDEN, "LOGIN_REQUIRES_OTP",
+                    "Admin login requires OTP verification",
+                    Map.of("pre_auth_token", preAuthToken, "status", preAuthToken));
+        }
+
         return tokenService.issue(user, null);
     }
 
@@ -301,13 +313,24 @@ public class AuthService {
     }
 
     private void createVerificationTokenAndSend(User user) {
+        if (appProperties.skipEmailVerification()) {
+            // Dev mode: skip email entirely — mark user as verified immediately
+            user.setEmailVerified(true);
+            user.setStatus(user.getRole() == UserRole.ORGANIZER
+                    ? UserStatus.PENDING_ADMIN_APPROVAL
+                    : UserStatus.ACTIVE);
+            System.out.println("[DEV] Email verification skipped for: " + user.getEmail()
+                    + " — status set to " + user.getStatus());
+            return;
+        }
+
         String raw = SecureTokenGenerator.generate();
         EmailVerificationToken token = new EmailVerificationToken();
         token.setUser(user);
         token.setTokenHash(TokenHashUtil.sha256(raw));
         token.setExpiresAt(Instant.now().plusSeconds(86_400));
         emailTokenRepository.save(token);
-        
+
         try {
             emailService.sendVerificationEmail(user.getEmail(), raw);
         } catch (Exception e) {

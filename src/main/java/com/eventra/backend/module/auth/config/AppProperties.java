@@ -8,6 +8,7 @@ public record AppProperties(
         String corsAllowedOrigins,
         String mailFrom,
         int bcryptStrength,
-        String googleClientId
+        String googleClientId,
+        boolean skipEmailVerification
 ) {
 }

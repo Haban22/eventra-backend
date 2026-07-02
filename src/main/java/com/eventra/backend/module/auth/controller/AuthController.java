@@ -5,6 +5,7 @@ import com.eventra.backend.module.auth.dto.response.AuthResponse;
 import com.eventra.backend.module.auth.dto.response.MessageResponse;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.auth.service.AuthService;
+import com.eventra.backend.module.auth.service.OtpService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,9 +16,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
+    private final OtpService otpService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, OtpService otpService) {
         this.authService = authService;
+        this.otpService = otpService;
     }
 
     @PostMapping("/register/attendee")
@@ -80,6 +83,19 @@ public class AuthController {
     @PostMapping("/google")
     public AuthResponse google(@Valid @RequestBody GoogleLoginRequest request) {
         return authService.googleLogin(request);
+    }
+
+    // ── Admin 2FA OTP ─────────────────────────────────────────────────────────
+
+    @PostMapping("/admin/otp/request")
+    public MessageResponse adminOtpRequest(@Valid @RequestBody OtpRequest request) {
+        otpService.requestAdminOtp(request.pre_auth_token());
+        return new MessageResponse("OTP sent to your registered email");
+    }
+
+    @PostMapping("/admin/otp/verify")
+    public AuthResponse adminOtpVerify(@Valid @RequestBody OtpVerifyRequest request) {
+        return otpService.verifyAdminOtp(request.pre_auth_token(), request.otp());
     }
 
     private String clientIp(HttpServletRequest request) {

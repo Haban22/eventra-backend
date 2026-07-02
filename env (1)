@@ -1,0 +1,32 @@
+# ── Database ──────────────────────────────────────────────────────────────────
+spring.datasource.url=jdbc:postgresql://localhost:5432/eventra_db
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
+# ── JWT ───────────────────────────────────────────────────────────────────────
+app.jwt-secret=eventra-dev-secret-change-this-before-deploying-min32
+app.jwt-access-expiry-seconds=86400
+app.jwt-refresh-expiry-seconds=604800
+
+# ── App ───────────────────────────────────────────────────────────────────────
+app.frontend-url=http://localhost:5173
+app.bcrypt-strength=10
+app.google-client-id=
+
+# ── Mail ──────────────────────────────────────────────────────────────────────
+app.mail-from=noreply@eventra.com
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=
+spring.mail.password=
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+cors.allowed-origins=http://localhost:5173
+app.cors-allowed-origins=http://localhost:5173
+
+# ── Eventra AI microservice ───────────────────────────────────────────────────
+eventra.ai.url=http://localhost:8001

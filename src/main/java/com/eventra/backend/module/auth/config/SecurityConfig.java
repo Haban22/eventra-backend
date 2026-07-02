@@ -31,6 +31,7 @@ public class SecurityConfig {
             "/api/auth/reset-password",
             "/api/auth/google",
             "/api/auth/refresh",
+            "/api/auth/admin/otp/**",
             "/api/ai/**",
             "/v3/api-docs/**",
             "/swagger-ui/**"
@@ -76,7 +77,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(corsProperties.allowedOrigins().split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(false);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

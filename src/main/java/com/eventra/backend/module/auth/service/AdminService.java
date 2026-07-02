@@ -30,6 +30,30 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
+    public PageResponse<UserSummaryResponse> listUsers(String roleStr, String statusStr, int page, int size) {
+        var pageable = PageRequest.of(page, size);
+        org.springframework.data.domain.Page<User> users;
+
+        if (roleStr != null && statusStr != null) {
+            UserRole role = UserRole.valueOf(roleStr.toUpperCase());
+            UserStatus status = UserStatus.valueOf(statusStr.toUpperCase());
+            users = userRepository.findByRoleAndStatus(role, status, pageable);
+        } else if (roleStr != null) {
+            UserRole role = UserRole.valueOf(roleStr.toUpperCase());
+            users = userRepository.findByRole(role, pageable);
+        } else if (statusStr != null) {
+            UserStatus status = UserStatus.valueOf(statusStr.toUpperCase());
+            users = userRepository.findByStatus(status, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+
+        return new PageResponse<>(
+                users.stream().map(UserSummaryResponse::from).toList(),
+                users.getTotalElements(), page, size);
+    }
+
+    @Transactional(readOnly = true)
     public PageResponse<OrganizerSummaryResponse> pendingOrganizers(int page, int size) {
         var profiles = organizerProfileRepository.findByApprovedAtIsNullAndRejectionReasonIsNull(PageRequest.of(page, size));
         var data = profiles.stream()

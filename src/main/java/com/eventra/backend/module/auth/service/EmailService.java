@@ -23,6 +23,14 @@ public class EmailService {
         send(email, "Reset your Eventra password", properties.frontendUrl() + "/reset-password?token=" + rawToken);
     }
 
+    public void sendOtpEmail(String email, String code, String purpose) {
+        String subject = "ADMIN_LOGIN".equals(purpose)
+                ? "Your Eventra Admin Sign-in Code"
+                : "Your Eventra Verification Code";
+        String body = "Your one-time verification code is: " + code + "\n\nThis code expires in 10 minutes. Do not share it with anyone.";
+        send(email, subject, body);
+    }
+
     private void send(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.mailFrom());
