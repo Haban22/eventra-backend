@@ -8,6 +8,7 @@ import com.eventra.backend.module.auth.entity.UserRole;
 import com.eventra.backend.module.auth.entity.UserStatus;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
 import com.eventra.backend.module.auth.service.AdminService;
+import com.eventra.backend.module.auth.service.AuditLogQueryService;
 import com.eventra.backend.module.auth.dto.request.SuspendUserRequest;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,9 +26,19 @@ import java.util.UUID;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
     private final AdminService adminService;
+    private final AuditLogQueryService auditLogQueryService;
 
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, AuditLogQueryService auditLogQueryService) {
         this.adminService = adminService;
+        this.auditLogQueryService = auditLogQueryService;
+    }
+
+    @GetMapping("/audit-logs")
+    public PageResponse<AuditLogEntryResponse> getAuditLogs(
+            @RequestParam(required = false) String targetType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return auditLogQueryService.getAuditLogs(targetType, page, size);
     }
 
     @GetMapping("/users")

@@ -41,4 +41,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         );
 
         boolean existsByIdAndOrganizerId(UUID id, UUID organizerId);
+
+        long countByStatus(EventStatus status);
 }

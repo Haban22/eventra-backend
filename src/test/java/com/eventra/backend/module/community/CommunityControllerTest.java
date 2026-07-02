@@ -281,7 +281,7 @@ class CommunityControllerTest {
         flagged.setId(1L);
         flagged.setStatus(FlagStatus.APPROVED);
 
-        when(moderationService.approveContent(eq(1L), any())).thenReturn(flagged);
+        when(moderationService.approveContent(eq(1L), any(), any())).thenReturn(flagged);
 
         mockMvc.perform(post("/api/admin/community/flagged/1/approve").with(authentication(adminAuth())))
                 .andExpect(status().isOk())

@@ -1,6 +1,7 @@
 package com.eventra.backend.module.wallet.service;
 
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.service.AuditService;
 import com.eventra.backend.module.config.service.SystemConfigService;
 import com.eventra.backend.module.notification.service.NotificationService;
 import com.eventra.backend.module.wallet.dto.*;
@@ -36,19 +37,22 @@ public class WalletService {
     private final PayoutRequestRepository payoutRequestRepository;
     private final SystemConfigService systemConfigService;
     private final NotificationService notificationService;
+    private final AuditService auditService;
 
     public WalletService(WalletRepository walletRepository,
                          WalletTransactionRepository transactionRepository,
                          PayoutMethodRepository payoutMethodRepository,
                          PayoutRequestRepository payoutRequestRepository,
                          SystemConfigService systemConfigService,
-                         NotificationService notificationService) {
+                         NotificationService notificationService,
+                         AuditService auditService) {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.payoutMethodRepository = payoutMethodRepository;
         this.payoutRequestRepository = payoutRequestRepository;
         this.systemConfigService = systemConfigService;
         this.notificationService = notificationService;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -205,7 +209,7 @@ public class WalletService {
     }
 
     @Transactional
-    public PayoutRequestResponse approvePayoutRequest(UUID requestId, String adminNotes) {
+    public PayoutRequestResponse approvePayoutRequest(UUID adminId, UUID requestId, String adminNotes, String ipAddress) {
         PayoutRequest request = loadPayoutRequest(requestId);
         if (request.getStatus() != PayoutStatus.PENDING) {
             throw new ApiException(HttpStatus.CONFLICT, "WRONG_STATUS", "Payout request is not pending");
@@ -216,11 +220,12 @@ public class WalletService {
         payoutRequestRepository.save(request);
         notificationService.notify(request.getOrganizerId(), "payout_approved", "Payout Approved! 💰",
                 "Your payout request for " + request.getAmount() + " has been approved.", "/organizer/wallet");
+        auditService.logGeneric(adminId, "payout_request", requestId.toString(), "PAYOUT_APPROVED", adminNotes, ipAddress);
         return PayoutRequestResponse.from(request, payoutMethodRepository.findById(request.getMethodId()).orElse(null));
     }
 
     @Transactional
-    public PayoutRequestResponse rejectPayoutRequest(UUID requestId, String reason) {
+    public PayoutRequestResponse rejectPayoutRequest(UUID adminId, UUID requestId, String reason, String ipAddress) {
         PayoutRequest request = loadPayoutRequest(requestId);
         if (request.getStatus() != PayoutStatus.PENDING) {
             throw new ApiException(HttpStatus.CONFLICT, "WRONG_STATUS", "Payout request is not pending");
@@ -237,6 +242,7 @@ public class WalletService {
         walletRepository.save(wallet);
         recordTransaction(request.getOrganizerId(), WalletTransactionType.REFUND, request.getAmount(), wallet.getBalance(),
                 "Payout rejected — funds returned", request.getId().toString());
+        auditService.logGeneric(adminId, "payout_request", requestId.toString(), "PAYOUT_REJECTED", reason, ipAddress);
         notificationService.notify(request.getOrganizerId(), "payout_rejected", "Payout Request Update",
                 "Your payout request for " + request.getAmount() + " was not approved." + (reason != null ? " Reason: " + reason : ""), "/organizer/wallet");
 

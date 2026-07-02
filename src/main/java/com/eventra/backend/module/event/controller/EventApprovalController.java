@@ -7,6 +7,7 @@ import com.eventra.backend.module.event.dto.response.EventResponse;
 import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.service.EventApprovalService;
 import com.eventra.backend.module.event.service.EventService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,8 +33,9 @@ public class EventApprovalController {
     public EventApprovalResponse approveEvent(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable UUID id,
-            @Valid @RequestBody EventApprovalRequest request) {
-        return approvalService.approveEvent(principal.userId(), id, request);
+            @Valid @RequestBody EventApprovalRequest request,
+            HttpServletRequest httpRequest) {
+        return approvalService.approveEvent(principal.userId(), id, request, httpRequest.getRemoteAddr());
     }
 
     @GetMapping("/{id}/approval")
