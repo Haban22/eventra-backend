@@ -3,6 +3,7 @@ package com.eventra.backend.module.auth.controller;
 import com.eventra.backend.module.auth.dto.request.OrganizerUpgradeRequest;
 import com.eventra.backend.module.auth.dto.request.PasswordChangeRequest;
 import com.eventra.backend.module.auth.dto.request.UpdateMeRequest;
+import com.eventra.backend.module.auth.dto.request.OnboardingOtpVerifyRequest;
 import com.eventra.backend.module.auth.dto.response.MessageResponse;
 import com.eventra.backend.module.auth.dto.response.UserResponse;
 import com.eventra.backend.module.auth.security.AuthPrincipal;
@@ -38,6 +39,20 @@ public class UserController {
         userService.requestOrganizerUpgrade(principal.userId(),
                 request != null ? request.reason() : null);
         return new MessageResponse("Organizer upgrade request submitted");
+    }
+
+    @PostMapping("/me/onboarding/otp/request")
+    public MessageResponse requestOnboardingOtp(@AuthenticationPrincipal AuthPrincipal principal) {
+        userService.requestOnboardingOtp(principal.userId());
+        return new MessageResponse("OTP code sent to your registered email");
+    }
+
+    @PostMapping("/me/onboarding/otp/verify")
+    public MessageResponse verifyOnboardingOtp(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @Valid @RequestBody OnboardingOtpVerifyRequest request) {
+        userService.verifyOnboardingOtp(principal.userId(), request.code());
+        return new MessageResponse("Onboarding completed successfully");
     }
 
     @PatchMapping("/me/password")

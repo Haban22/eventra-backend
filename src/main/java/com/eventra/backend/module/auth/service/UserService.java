@@ -23,15 +23,18 @@ public class UserService {
     private final OrganizerProfileRepository organizerProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final OtpService otpService;
 
     public UserService(UserRepository userRepository, 
                        OrganizerProfileRepository organizerProfileRepository,
                        PasswordEncoder passwordEncoder, 
-                       TokenService tokenService) {
+                       TokenService tokenService,
+                       OtpService otpService) {
         this.userRepository = userRepository;
         this.organizerProfileRepository = organizerProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.otpService = otpService;
     }
 
     @Transactional(readOnly = true)
@@ -89,6 +92,18 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         tokenService.revokeAllForUser(user.getId());
         tokenService.blacklist(accessJti, accessExpEpoch - java.time.Instant.now().getEpochSecond());
+    }
+
+    @Transactional
+    public void requestOnboardingOtp(UUID userId) {
+        User user = load(userId);
+        otpService.generateOnboardingOtp(user);
+    }
+
+    @Transactional
+    public void verifyOnboardingOtp(UUID userId, String code) {
+        User user = load(userId);
+        otpService.verifyOnboardingOtp(user, code);
     }
 
     private User load(UUID userId) {

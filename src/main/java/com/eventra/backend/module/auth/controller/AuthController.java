@@ -51,6 +51,17 @@ public class AuthController {
         return authService.login(request, clientIp(servletRequest));
     }
 
+    @PostMapping("/admin/otp/request")
+    public MessageResponse requestAdminOtp(@Valid @RequestBody AdminOtpRequest request) {
+        authService.requestAdminOtp(request.preAuthToken());
+        return new MessageResponse("OTP code sent to your registered email");
+    }
+
+    @PostMapping("/admin/otp/verify")
+    public AuthResponse verifyAdminOtp(@Valid @RequestBody AdminOtpVerifyRequest request) {
+        return authService.verifyAdminOtp(request.preAuthToken(), request.code());
+    }
+
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshRequest request) {
         return authService.refresh(request);

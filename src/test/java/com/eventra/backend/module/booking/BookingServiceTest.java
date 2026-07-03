@@ -16,6 +16,10 @@ import com.eventra.backend.module.booking.valueobject.Money;
 import com.eventra.backend.module.event.entity.Event;
 import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.config.service.SystemConfigService;
+import com.eventra.backend.module.booking.repository.PaymentRepository;
+import com.eventra.backend.module.wallet.service.WalletService;
+import com.eventra.backend.module.booking.gateway.StripeGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,8 +54,28 @@ class BookingServiceTest {
     @Mock
     private EventRepository eventRepository;
 
+    @Mock
+    private SystemConfigService systemConfigService;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private WalletService walletService;
+
+    @Mock
+    private StripeGateway stripeGateway;
+
     @InjectMocks
     private BookingService bookingService;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        com.eventra.backend.module.config.entity.SystemConfig config = new com.eventra.backend.module.config.entity.SystemConfig();
+        config.setTicketHoldTimeoutMinutes(15);
+        config.setCancellationWindowHours(24);
+        lenient().when(systemConfigService.getConfig()).thenReturn(config);
+    }
 
     @Test
     void createBooking_Success() {
