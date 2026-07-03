@@ -72,9 +72,22 @@ public class AiServiceClient {
         }
     }
 
+    public Map<String, Object> syncEvents(List<Map<String, Object>> events) {
+        try {
+            return restClient.post()
+                    .uri("/events/sync")
+                    .body(events)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+        } catch (RestClientException e) {
+            throw new AiServiceUnavailableException("AI sync service unavailable", e);
+        }
+    }
+
     public static class AiServiceUnavailableException extends RuntimeException {
         public AiServiceUnavailableException(String message, Throwable cause) {
             super(message, cause);
         }
     }
+
 }
