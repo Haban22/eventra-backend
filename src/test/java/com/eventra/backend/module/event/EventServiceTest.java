@@ -9,6 +9,8 @@ import com.eventra.backend.module.event.enums.EventStatus;
 import com.eventra.backend.module.event.repository.CategoryRepository;
 import com.eventra.backend.module.event.repository.EventApprovalRepository;
 import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.auth.repository.UserRepository;
+import com.eventra.backend.module.auth.repository.OrganizerProfileRepository;
 import com.eventra.backend.module.event.service.EventService;
 import com.eventra.backend.module.event.valueobject.Capacity;
 import com.eventra.backend.module.event.valueobject.Location;
@@ -40,6 +42,12 @@ class EventServiceTest {
 
     @Mock
     private EventApprovalRepository approvalRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private OrganizerProfileRepository organizerProfileRepository;
 
     @InjectMocks
     private EventService eventService;

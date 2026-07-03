@@ -59,6 +59,8 @@ class AuthServiceTest {
     private TransactionTemplate transactionTemplate;
     @Mock
     private AppProperties appProperties;
+    @Mock
+    private OtpService otpService;
 
     private AuthService authService;
 
@@ -68,7 +70,8 @@ class AuthServiceTest {
                 userRepository, organizerProfileRepository, emailTokenRepository,
                 passwordResetTokenRepository, refreshTokenRepository, authProviderRepository,
                 passwordEncoder, emailService, rateLimitService, tokenService,
-                jwtUtil, googleIdTokenVerifier, transactionTemplate, appProperties
+                jwtUtil, googleIdTokenVerifier, transactionTemplate, appProperties,
+                otpService
         );
     }
 

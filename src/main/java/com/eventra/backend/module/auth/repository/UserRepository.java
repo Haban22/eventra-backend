@@ -6,6 +6,8 @@ import com.eventra.backend.module.auth.entity.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -13,10 +15,21 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    Page<User> findByRoleAndStatus(UserRole role, UserStatus status, Pageable pageable);
-    Page<User> findByRole(UserRole role, Pageable pageable);
-    Page<User> findByStatus(UserStatus status, Pageable pageable);
-    long countByRole(UserRole role);
-    long countByStatus(UserStatus status);
+
+    @Query("SELECT u FROM User u WHERE u.role = :role AND u.status = :status")
+    Page<User> findByRoleAndStatus(@Param("role") UserRole role, @Param("status") UserStatus status, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.role = :role")
+    Page<User> findByRole(@Param("role") UserRole role, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    Page<User> findByStatus(@Param("status") UserStatus status, Pageable pageable);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.role = :role")
+    long countByRole(@Param("role") UserRole role);
+
+    @Query("SELECT COUNT(u) FROM User u WHERE u.status = :status")
+    long countByStatus(@Param("status") UserStatus status);
+
     java.util.List<User> findByCreatedAtAfter(java.time.Instant after);
 }

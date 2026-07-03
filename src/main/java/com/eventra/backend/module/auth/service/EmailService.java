@@ -25,6 +25,10 @@ public class EmailService {
         send(email, "Reset your Eventra password", properties.frontendUrl() + "/reset-password/" + rawToken);
     }
 
+    public void sendOtpEmail(String email, String otp) {
+        send(email, "Your Eventra One-Time Password", "Your OTP code is: " + otp + ". It is valid for 5 minutes.");
+    }
+
     private void send(String to, String subject, String body) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(properties.mailFrom());

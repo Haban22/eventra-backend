@@ -38,13 +38,15 @@ public class AuthService {
     private final GoogleIdTokenVerifier googleIdTokenVerifier;
     private final TransactionTemplate transactionTemplate;
     private final com.eventra.backend.module.auth.config.AppProperties appProperties;
+    private final OtpService otpService;
 
     public AuthService(UserRepository userRepository, OrganizerProfileRepository organizerProfileRepository,
                        EmailVerificationTokenRepository emailTokenRepository, PasswordResetTokenRepository passwordResetTokenRepository,
                        RefreshTokenRepository refreshTokenRepository, AuthProviderRepository authProviderRepository,
                        PasswordEncoder passwordEncoder, EmailService emailService, RateLimitService rateLimitService,
                        TokenService tokenService, JwtUtil jwtUtil, GoogleIdTokenVerifier googleIdTokenVerifier,
-                       TransactionTemplate transactionTemplate, com.eventra.backend.module.auth.config.AppProperties appProperties) {
+                       TransactionTemplate transactionTemplate, com.eventra.backend.module.auth.config.AppProperties appProperties,
+                       OtpService otpService) {
         this.userRepository = userRepository;
         this.organizerProfileRepository = organizerProfileRepository;
         this.emailTokenRepository = emailTokenRepository;
@@ -59,6 +61,7 @@ public class AuthService {
         this.googleIdTokenVerifier = googleIdTokenVerifier;
         this.transactionTemplate = transactionTemplate;
         this.appProperties = appProperties;
+        this.otpService = otpService;
     }
 
     @Transactional
@@ -174,7 +177,25 @@ public class AuthService {
         }
         user.setFailedLoginAttempts((short) 0);
         user.setLockedUntil(null);
+
+        if (user.getRole() == UserRole.ADMIN) {
+            otpService.generateOtp(user);
+            String preAuthToken = otpService.createPreAuthToken(user);
+            throw new ApiException(HttpStatus.FORBIDDEN, "LOGIN_REQUIRES_OTP", "OTP verification required", Map.of("pre_auth_token", preAuthToken));
+        }
+
         return tokenService.issue(user, null);
+    }
+
+    @Transactional
+    public AuthResponse verifyAdminOtp(String preAuthToken, String code) {
+        User user = otpService.verifyAdminOtp(preAuthToken, code);
+        return tokenService.issue(user, null);
+    }
+
+    @Transactional
+    public void requestAdminOtp(String preAuthToken) {
+        otpService.requestAdminOtp(preAuthToken);
     }
 
     @Transactional

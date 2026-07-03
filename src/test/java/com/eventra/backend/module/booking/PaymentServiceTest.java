@@ -13,6 +13,9 @@ import com.eventra.backend.module.booking.repository.BookingRepository;
 import com.eventra.backend.module.booking.repository.PaymentRepository;
 import com.eventra.backend.module.booking.service.PaymentService;
 import com.eventra.backend.module.booking.valueobject.Money;
+import com.eventra.backend.module.event.repository.EventRepository;
+import com.eventra.backend.module.wallet.service.WalletService;
+import com.eventra.backend.module.notification.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,7 +41,16 @@ class PaymentServiceTest {
     private BookingRepository bookingRepository;
 
     @Mock
+    private EventRepository eventRepository;
+
+    @Mock
     private StripeGateway stripeGateway;
+
+    @Mock
+    private WalletService walletService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private PaymentService paymentService;
