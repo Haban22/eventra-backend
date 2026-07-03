@@ -59,14 +59,14 @@ public class EventApprovalService {
             notificationService.notify(event.getOrganizerId(), "event_approved",
                     "Event Approved! 🎉",
                     "\"" + event.getTitle() + "\" has been approved and is now live.",
-                    "/organizer/events/" + event.getId());
+                    "/organizer/events/" + event.getId() + "/manage");
             auditService.logGeneric(adminId, "event", eventId.toString(), "EVENT_APPROVED", null, ipAddress);
         } else if (request.status() == ApprovalStatus.REJECTED) {
             event.setStatus(EventStatus.DRAFT);
             notificationService.notify(event.getOrganizerId(), "event_rejected",
                     "Event Needs Changes",
                     "\"" + event.getTitle() + "\" was not approved." + (request.feedback() != null ? " Feedback: " + request.feedback() : ""),
-                    "/organizer/events/" + event.getId());
+                    "/organizer/events/" + event.getId() + "/manage");
             auditService.logGeneric(adminId, "event", eventId.toString(), "EVENT_REJECTED", request.feedback(), ipAddress);
         } else {
             event.setStatus(EventStatus.DRAFT);

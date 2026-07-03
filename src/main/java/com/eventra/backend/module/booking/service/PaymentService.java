@@ -94,7 +94,7 @@ public class PaymentService {
             notificationService.notify(event.getOrganizerId(), "new_booking",
                     "New Booking",
                     "Someone just booked \"" + event.getTitle() + "\".",
-                    "/organizer/events/" + event.getId());
+                    "/organizer/events/" + event.getId() + "/manage");
         });
 
         return PaymentResponse.from(payment);

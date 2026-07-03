@@ -81,7 +81,7 @@ public class AdminService {
         profile.setApprovedAt(Instant.now());
         auditService.log(adminId, id, "ORGANIZER_APPROVED", previous, UserStatus.ACTIVE, null, ipAddress);
         notificationService.notify(id, "organizer_approved", "Organizer Request Approved! 🎉",
-                "Your request to become an organizer has been approved.", "/organizer/dashboard");
+                "Your request to become an organizer has been approved.", "/organizer/analytics");
     }
 
     @Transactional
