@@ -10,6 +10,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class EventSyncScheduler {
      * Sync all published events to the AI microservice on application startup.
      */
     @EventListener(ApplicationReadyEvent.class)
+    @Transactional(readOnly = true)
     public void syncOnStartup() {
         log.info("Application ready. Initializing database event synchronization with AI Service...");
         syncEvents();
@@ -37,11 +39,13 @@ public class EventSyncScheduler {
      * Periodically sync events every 15 minutes to ensure consistency.
      */
     @Scheduled(fixedDelay = 900000) // 15 minutes in milliseconds
+    @Transactional(readOnly = true)
     public void scheduledSync() {
         log.info("Starting scheduled event synchronization with AI Service...");
         syncEvents();
     }
 
+    @Transactional(readOnly = true)
     public synchronized void syncEvents() {
         try {
             List<Event> publishedEvents = eventRepository.findByStatus(EventStatus.PUBLISHED);
