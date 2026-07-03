@@ -1,6 +1,8 @@
 package com.eventra.backend.module.booking.service;
 
 import com.eventra.backend.module.auth.exception.ApiException;
+import com.eventra.backend.module.auth.repository.UserRepository;
+import com.eventra.backend.module.auth.entity.User;
 import com.eventra.backend.module.config.service.SystemConfigService;
 import com.eventra.backend.module.booking.dto.request.BookingRequest;
 import com.eventra.backend.module.booking.dto.response.BookingResponse;
@@ -43,6 +45,7 @@ public class BookingService {
     private final PaymentRepository paymentRepository;
     private final WalletService walletService;
     private final StripeGateway stripeGateway;
+    private final UserRepository userRepository;
 
     public BookingService(BookingRepository bookingRepository,
                           TicketRepository ticketRepository,
@@ -50,7 +53,8 @@ public class BookingService {
                           SystemConfigService systemConfigService,
                           PaymentRepository paymentRepository,
                           WalletService walletService,
-                          StripeGateway stripeGateway) {
+                          StripeGateway stripeGateway,
+                          UserRepository userRepository) {
         this.bookingRepository = bookingRepository;
         this.ticketRepository = ticketRepository;
         this.eventRepository = eventRepository;
@@ -58,6 +62,7 @@ public class BookingService {
         this.paymentRepository = paymentRepository;
         this.walletService = walletService;
         this.stripeGateway = stripeGateway;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -191,7 +196,7 @@ public class BookingService {
         assertEventOwner(eventId, organizerId);
         return bookingRepository.findByEventId(eventId)
                 .stream()
-                .map(BookingResponse::from)
+                .map(this::mapToResponse)
                 .toList();
     }
 
@@ -213,7 +218,20 @@ public class BookingService {
         }
 
         booking.checkIn();
-        return BookingResponse.from(bookingRepository.save(booking));
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    private BookingResponse mapToResponse(Booking b) {
+        String name = "Unknown Attendee";
+        String email = "";
+        if (b.getAttendeeId() != null) {
+            var userOpt = userRepository.findById(b.getAttendeeId());
+            if (userOpt.isPresent()) {
+                name = userOpt.get().getFullName();
+                email = userOpt.get().getEmail();
+            }
+        }
+        return BookingResponse.from(b, name, email);
     }
 
     private void assertEventOwner(UUID eventId, UUID organizerId) {

@@ -33,4 +33,8 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
                                                           @Param("category") String category);
 
     boolean existsByNameIgnoreCase(String name);
+
+    List<Community> findAllByCreatedByUserId(java.util.UUID createdByUserId);
+
+    List<Community> findAllByActiveFalseOrderByCreatedAtDesc();
 }

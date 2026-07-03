@@ -30,10 +30,12 @@ public class CommunityService {
     private final CommunityMemberRepository memberRepository;
     private final RewardsService rewardsService;
 
-    public List<CommunityResponse> getCommunities(String search, String category, String sort, UUID userId) {
+    public List<CommunityResponse> getCommunities(String search, String category, String sort, UUID userId, UUID creatorId) {
         List<Community> communities;
 
-        if (search != null && !search.isBlank()) {
+        if (creatorId != null) {
+            communities = communityRepository.findAllByCreatedByUserId(creatorId);
+        } else if (search != null && !search.isBlank()) {
             communities = (category != null && !category.isBlank())
                     ? communityRepository.searchByNameOrDescriptionAndCategory(search.trim(), category)
                     : communityRepository.searchByNameOrDescription(search.trim());
@@ -76,6 +78,7 @@ public class CommunityService {
         c.setCoverImage(req.getCoverImage());
         c.setCategory(req.getCategory());
         c.setCreatedByUserId(req.getCreatedByUserId());
+        c.setActive(false);
         c = communityRepository.save(c);
         return toResponse(c, false);
     }
@@ -139,6 +142,27 @@ public class CommunityService {
                 .collect(Collectors.toList());
     }
 
+    public List<CommunityResponse> getPendingCommunities() {
+        return communityRepository.findAllByActiveFalseOrderByCreatedAtDesc().stream()
+                .map(c -> toResponse(c, false))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public CommunityResponse approveCommunity(Long id) {
+        Community c = communityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found: " + id));
+        c.setActive(true);
+        return toResponse(communityRepository.save(c), false);
+    }
+
+    @Transactional
+    public void rejectCommunity(Long id) {
+        Community c = communityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Community not found: " + id));
+        communityRepository.delete(c);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
     CommunityResponse toResponse(Community c, boolean joined) {
@@ -151,7 +175,9 @@ public class CommunityService {
         r.setMemberCount(c.getMemberCount());
         r.setEventCount(c.getEventCount());
         r.setJoined(joined);
+        r.setActive(c.getActive() != null ? c.getActive() : false);
         r.setCreatedAt(c.getCreatedAt());
+        r.setCreatedByUserId(c.getCreatedByUserId() != null ? c.getCreatedByUserId().toString() : null);
         return r;
     }
 

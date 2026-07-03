@@ -26,9 +26,10 @@ public class CommunityController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "popular") String sort,
-            @RequestParam(required = false) UUID userId) {
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) UUID creatorId) {
         return ResponseEntity.ok(ApiResponse.success(
-                communityService.getCommunities(search, category, sort, userId)));
+                communityService.getCommunities(search, category, sort, userId, creatorId)));
     }
 
     @GetMapping("/{id}")

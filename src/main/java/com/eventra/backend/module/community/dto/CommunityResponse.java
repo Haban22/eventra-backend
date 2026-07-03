@@ -18,5 +18,7 @@ public class CommunityResponse {
     private Long memberCount;
     private Long eventCount;
     private boolean joined;
+    private boolean active;
     private LocalDateTime createdAt;
+    private String createdByUserId;
 }

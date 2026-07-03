@@ -20,9 +20,15 @@ public record BookingResponse(
         Instant checkedInAt,
         Instant holdExpiresAt,
         String transactionId,
-        Instant createdAt
+        Instant createdAt,
+        String attendeeName,
+        String attendeeEmail
 ) {
     public static BookingResponse from(Booking b) {
+        return from(b, null, null);
+    }
+
+    public static BookingResponse from(Booking b, String attendeeName, String attendeeEmail) {
         return new BookingResponse(
                 b.getId(),
                 b.getAttendeeId(),
@@ -35,7 +41,9 @@ public record BookingResponse(
                 b.getCheckedInAt(),
                 b.getHoldExpiresAt(),
                 b.getTransactionId(),
-                b.getCreatedAt()
+                b.getCreatedAt(),
+                attendeeName,
+                attendeeEmail
         );
     }
 }
