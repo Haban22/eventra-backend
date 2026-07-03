@@ -71,7 +71,7 @@ class CommunityServiceTest {
         when(communityRepository.findAllByActiveTrueOrderByMemberCountDesc()).thenReturn(List.of(community));
         when(memberRepository.findByUserId(TEST_USER_ID)).thenReturn(List.of(membership));
 
-        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", TEST_USER_ID);
+        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", TEST_USER_ID, null);
 
         assertEquals(1, result.size());
         assertTrue(result.get(0).isJoined());
@@ -83,7 +83,7 @@ class CommunityServiceTest {
         when(communityRepository.findAllByActiveTrueOrderByMemberCountDesc()).thenReturn(List.of(community));
         when(memberRepository.findByUserId(OTHER_USER_ID)).thenReturn(Collections.emptyList());
 
-        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", OTHER_USER_ID);
+        List<CommunityResponse> result = communityService.getCommunities(null, null, "popular", OTHER_USER_ID, null);
 
         assertEquals(1, result.size());
         assertFalse(result.get(0).isJoined());
@@ -94,7 +94,7 @@ class CommunityServiceTest {
         when(communityRepository.findAllByActiveTrueOrderByEventCountDesc()).thenReturn(List.of(community));
         when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
-        communityService.getCommunities(null, null, "events", null);
+        communityService.getCommunities(null, null, "events", null, null);
 
         verify(communityRepository).findAllByActiveTrueOrderByEventCountDesc();
     }
@@ -104,7 +104,7 @@ class CommunityServiceTest {
         when(communityRepository.findAllByActiveTrueOrderByNameAsc()).thenReturn(List.of(community));
         when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
-        communityService.getCommunities(null, null, "az", null);
+        communityService.getCommunities(null, null, "az", null, null);
 
         verify(communityRepository).findAllByActiveTrueOrderByNameAsc();
     }
@@ -115,7 +115,7 @@ class CommunityServiceTest {
                 .thenReturn(List.of(community));
         when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
-        List<CommunityResponse> result = communityService.getCommunities(null, "Music", "popular", null);
+        List<CommunityResponse> result = communityService.getCommunities(null, "Music", "popular", null, null);
 
         assertEquals(1, result.size());
         assertEquals("Music", result.get(0).getCategory());
@@ -126,7 +126,7 @@ class CommunityServiceTest {
         when(communityRepository.searchByNameOrDescription("music")).thenReturn(List.of(community));
         when(memberRepository.findByUserId(any(UUID.class))).thenReturn(Collections.emptyList());
 
-        List<CommunityResponse> result = communityService.getCommunities("music", null, "popular", null);
+        List<CommunityResponse> result = communityService.getCommunities("music", null, "popular", null, null);
 
         assertEquals(1, result.size());
     }

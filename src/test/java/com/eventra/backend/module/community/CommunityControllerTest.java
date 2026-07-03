@@ -77,7 +77,7 @@ class CommunityControllerTest {
     @Test
     void getCommunities_returns200WithList() throws Exception {
         CommunityResponse c = sampleCommunity(1L, "Cairo Music Lovers");
-        when(communityService.getCommunities(any(), any(), any(), any())).thenReturn(List.of(c));
+        when(communityService.getCommunities(any(), any(), any(), any(), any())).thenReturn(List.of(c));
 
         mockMvc.perform(get("/api/communities"))
                 .andExpect(status().isOk())
@@ -88,7 +88,7 @@ class CommunityControllerTest {
 
     @Test
     void getCommunities_supportsSearchAndCategoryParams() throws Exception {
-        when(communityService.getCommunities(eq("music"), eq("Music"), eq("popular"), eq(TEST_USER_ID)))
+        when(communityService.getCommunities(eq("music"), eq("Music"), eq("popular"), eq(TEST_USER_ID), any()))
                 .thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/communities?search=music&category=Music&sort=popular&userId=" + TEST_USER_ID))

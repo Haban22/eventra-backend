@@ -66,6 +66,9 @@ class BookingServiceTest {
     @Mock
     private StripeGateway stripeGateway;
 
+    @Mock
+    private com.eventra.backend.module.auth.repository.UserRepository userRepository;
+
     @InjectMocks
     private BookingService bookingService;
 
