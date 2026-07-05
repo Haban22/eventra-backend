@@ -179,6 +179,13 @@ public class BookingService {
                     paymentRepository.save(payment);
                 }
             });
+
+            // Decrement event reserved capacity
+            if (event.getCapacity() != null) {
+                int qty = booking.getItems().stream().mapToInt(com.eventra.backend.module.booking.valueobject.BookingItem::getQuantity).sum();
+                event.getCapacity().setReserved(Math.max(0, event.getCapacity().getReserved() - qty));
+                eventRepository.save(event);
+            }
         }
 
         booking.cancel();

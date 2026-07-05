@@ -84,6 +84,18 @@ public class AiServiceClient {
         }
     }
 
+    public Map<String, Object> predictAttendance(Map<String, Object> requestData) {
+        try {
+            return restClient.post()
+                    .uri("/predict-attendance")
+                    .body(requestData)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<>() {});
+        } catch (RestClientException e) {
+            throw new AiServiceUnavailableException("AI attendance prediction service unavailable", e);
+        }
+    }
+
     public static class AiServiceUnavailableException extends RuntimeException {
         public AiServiceUnavailableException(String message, Throwable cause) {
             super(message, cause);

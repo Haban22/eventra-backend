@@ -50,4 +50,26 @@ public class RecommendationController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(recommendationService.analyzeSentiment(req.getText())));
     }
+
+    @GetMapping("/feedback/event/{eventId}")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEventFeedback(
+            @PathVariable java.util.UUID eventId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(recommendationService.getEventFeedback(eventId)));
+    }
+
+    @PostMapping("/feedback/analyze")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> analyzeFeedback(
+            @RequestBody Map<String, String> req
+    ) {
+        java.util.UUID eventId = java.util.UUID.fromString(req.get("eventId"));
+        return ResponseEntity.ok(ApiResponse.success(recommendationService.analyzeFeedback(eventId)));
+    }
+
+    @PostMapping("/feedback/predict-attendance-detailed")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> predictAttendanceDetailed(
+            @RequestBody Map<String, Object> req
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(recommendationService.predictAttendanceDetailed(req)));
+    }
 }

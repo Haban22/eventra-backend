@@ -84,9 +84,14 @@ public class PaymentService {
         bookingRepository.save(booking);
 
         // Credit the organizer's wallet with the booking total minus the platform fee,
-        // and notify both sides of the confirmed booking.
+        // and notify both sides of the confirmed booking. Also increment event reserved capacity.
         eventRepository.findById(booking.getEventId()).ifPresent(event -> {
             walletService.recordOrganizerEarning(event.getOrganizerId(), booking.getTotalAmount().getAmount(), booking.getId());
+            if (event.getCapacity() != null) {
+                int qty = booking.getItems().stream().mapToInt(com.eventra.backend.module.booking.valueobject.BookingItem::getQuantity).sum();
+                event.getCapacity().setReserved(event.getCapacity().getReserved() + qty);
+                eventRepository.save(event);
+            }
             notificationService.notify(booking.getAttendeeId(), "rsvp_confirmed",
                     "Booking Confirmed! 🎉",
                     "Your booking for \"" + event.getTitle() + "\" is confirmed.",
