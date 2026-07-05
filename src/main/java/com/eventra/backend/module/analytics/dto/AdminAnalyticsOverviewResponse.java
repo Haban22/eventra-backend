@@ -20,5 +20,6 @@ public record AdminAnalyticsOverviewResponse(
         BigDecimal totalRevenue,
         long pendingPayoutRequests,
         long approvedPayoutRequests,
-        long rejectedPayoutRequests
+        long rejectedPayoutRequests,
+        java.util.Map<String, CategoryPerformanceStats> categoryStats
 ) {}

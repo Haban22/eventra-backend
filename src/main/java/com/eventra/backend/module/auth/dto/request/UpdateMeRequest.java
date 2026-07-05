@@ -16,8 +16,10 @@ public record UpdateMeRequest(
         String phone,
 
         @JsonProperty("profile_picture_url")
-        @Pattern(regexp = "^$|^https?://.+$", message = "must be a valid URL")
         String profilePictureUrl,
+
+        @JsonProperty("cover_photo_url")
+        String coverPhotoUrl,
 
         @JsonProperty("language_preference")
         @Pattern(regexp = "^(en|ar)$")

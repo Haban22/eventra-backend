@@ -12,6 +12,8 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController("authUserController")
 @RequestMapping("/api/v1/auth/users")
 public class UserController {
@@ -59,5 +61,12 @@ public class UserController {
     public MessageResponse changePassword(@AuthenticationPrincipal AuthPrincipal principal, @Valid @RequestBody PasswordChangeRequest request) {
         userService.changePassword(principal.userId(), principal.jti(), principal.expiresAtEpochSeconds(), request);
         return new MessageResponse("Password updated");
+    }
+
+    @GetMapping("/search")
+    public List<UserResponse> search(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @RequestParam String query) {
+        return userService.searchUsers(principal.userId(), query);
     }
 }

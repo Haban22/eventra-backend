@@ -51,6 +51,9 @@ public class User {
     @Column(name = "profile_picture_url")
     private String profilePictureUrl;
 
+    @Column(name = "cover_photo_url")
+    private String coverPhotoUrl;
+
     @Column(name = "language_preference", nullable = false)
     private String languagePreference = "en";
 

@@ -4,6 +4,10 @@ import com.eventra.backend.module.auth.entity.User;
 import com.eventra.backend.module.auth.entity.UserRole;
 import com.eventra.backend.module.auth.exception.ApiException;
 import com.eventra.backend.module.auth.repository.UserRepository;
+import com.eventra.backend.module.booking.entity.Booking;
+import com.eventra.backend.module.booking.enums.BookingStatus;
+import com.eventra.backend.module.booking.repository.BookingRepository;
+import com.eventra.backend.module.event.repository.EventRepository;
 import com.eventra.backend.module.messaging.dto.*;
 import com.eventra.backend.module.messaging.entity.BroadcastMessage;
 import com.eventra.backend.module.messaging.entity.CommunityMessage;
@@ -14,6 +18,7 @@ import com.eventra.backend.module.messaging.repository.BroadcastMessageRepositor
 import com.eventra.backend.module.messaging.repository.CommunityMessageRepository;
 import com.eventra.backend.module.messaging.repository.DirectMessageRepository;
 import com.eventra.backend.module.messaging.repository.EventMessageRepository;
+import com.eventra.backend.module.notification.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -30,19 +35,28 @@ public class MessagingService {
     private final BroadcastMessageRepository broadcastMessageRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final BookingRepository bookingRepository;
+    private final EventRepository eventRepository;
+    private final NotificationService notificationService;
 
     public MessagingService(DirectMessageRepository directMessageRepository,
                             EventMessageRepository eventMessageRepository,
                             CommunityMessageRepository communityMessageRepository,
                             BroadcastMessageRepository broadcastMessageRepository,
                             UserRepository userRepository,
-                            SimpMessagingTemplate messagingTemplate) {
+                            SimpMessagingTemplate messagingTemplate,
+                            BookingRepository bookingRepository,
+                            EventRepository eventRepository,
+                            NotificationService notificationService) {
         this.directMessageRepository = directMessageRepository;
         this.eventMessageRepository = eventMessageRepository;
         this.communityMessageRepository = communityMessageRepository;
         this.broadcastMessageRepository = broadcastMessageRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
+        this.bookingRepository = bookingRepository;
+        this.eventRepository = eventRepository;
+        this.notificationService = notificationService;
     }
 
     // ── Direct messages ─────────────────────────────────────────────────────
@@ -175,29 +189,65 @@ public class MessagingService {
             throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "You cannot broadcast to this audience");
         }
 
+        if (request.eventId() != null) {
+            boolean ownsEvent = eventRepository.existsByIdAndOrganizerId(request.eventId(), senderId);
+            if (!ownsEvent) {
+                throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "You do not own this event");
+            }
+        }
+
         BroadcastMessage message = new BroadcastMessage();
         message.setSenderId(senderId);
         message.setSubject(request.subject());
         message.setContent(request.content());
         message.setTargetRole(request.targetRole());
+        message.setEventId(request.eventId());
         message = broadcastMessageRepository.save(message);
 
         Map<UUID, User> users = resolveUsers(Set.of(senderId));
         BroadcastMessageResponse response = toBroadcastResponse(message, users);
-        // All clients of the target role subscribe to this shared topic on connect —
-        // simpler than resolving individual user queues for a potentially large audience.
-        messagingTemplate.convertAndSend("/topic/broadcasts/" + request.targetRole().name(), response);
+
+        if (request.eventId() != null) {
+            // Find attendees who have confirmed bookings
+            List<Booking> bookings = bookingRepository.findByEventIdAndStatus(request.eventId(), BookingStatus.CONFIRMED);
+            for (Booking booking : bookings) {
+                UUID attendeeId = booking.getAttendeeId();
+                // Send persistent notification
+                notificationService.notify(
+                        attendeeId,
+                        "broadcast",
+                        request.subject(),
+                        request.content(),
+                        "/app/messages"
+                );
+                // Send real-time WebSocket push over private queue
+                messagingTemplate.convertAndSendToUser(attendeeId.toString(), "/queue/broadcasts", response);
+            }
+        } else {
+            // Global push
+            messagingTemplate.convertAndSend("/topic/broadcasts/" + request.targetRole().name(), response);
+        }
         return response;
     }
 
     @Transactional(readOnly = true)
     public List<BroadcastMessageResponse> getMyBroadcasts(UUID me, UserRole myRole) {
-        BroadcastTargetRole matchingTarget = myRole == UserRole.ATTENDEE ? BroadcastTargetRole.ATTENDEE
-                : myRole == UserRole.ORGANIZER ? BroadcastTargetRole.ORGANIZER : null;
-        List<BroadcastMessage> messages = matchingTarget != null
-                ? broadcastMessageRepository.findBySenderIdOrTargetRoleOrderByCreatedAtDesc(me, matchingTarget)
-                : broadcastMessageRepository.findBySenderIdOrTargetRoleOrderByCreatedAtDesc(me, BroadcastTargetRole.ATTENDEE)
-                        .stream().filter(b -> b.getSenderId().equals(me)).toList();
+        List<BroadcastMessage> messages;
+        if (myRole == UserRole.ATTENDEE) {
+            messages = broadcastMessageRepository.findAttendeeBroadcasts(me);
+        } else if (myRole == UserRole.ORGANIZER) {
+            // Return organizer's own broadcasts, plus global broadcasts from admins to organizers
+            messages = broadcastMessageRepository.findBySenderIdOrTargetRoleOrderByCreatedAtDesc(me, BroadcastTargetRole.ORGANIZER)
+                    .stream()
+                    .filter(b -> b.getEventId() == null || b.getSenderId().equals(me))
+                    .toList();
+        } else { // ADMIN
+            // Return admin's own broadcasts
+            messages = broadcastMessageRepository.findBySenderIdOrTargetRoleOrderByCreatedAtDesc(me, BroadcastTargetRole.ATTENDEE)
+                    .stream()
+                    .filter(b -> b.getSenderId().equals(me))
+                    .toList();
+        }
         Map<UUID, User> users = resolveUsers(messages.stream().map(BroadcastMessage::getSenderId).collect(Collectors.toSet()));
         return messages.stream().map(m -> toBroadcastResponse(m, users)).toList();
     }
@@ -239,13 +289,18 @@ public class MessagingService {
 
     private BroadcastMessageResponse toBroadcastResponse(BroadcastMessage m, Map<UUID, User> users) {
         User sender = users.get(m.getSenderId());
-        long recipientCount = userRepository.countByRole(
-                m.getTargetRole() == BroadcastTargetRole.ATTENDEE ? UserRole.ATTENDEE : UserRole.ORGANIZER
-        );
+        long recipientCount;
+        if (m.getEventId() != null) {
+            recipientCount = bookingRepository.countByEventIdAndStatus(m.getEventId(), BookingStatus.CONFIRMED);
+        } else {
+            recipientCount = userRepository.countByRole(
+                    m.getTargetRole() == BroadcastTargetRole.ATTENDEE ? UserRole.ATTENDEE : UserRole.ORGANIZER
+            );
+        }
         return new BroadcastMessageResponse(
                 m.getId(), m.getSenderId(), sender != null ? sender.getFullName() : "Unknown User",
                 sender != null ? sender.getRole().name() : null, m.getTargetRole().name(),
-                m.getSubject(), m.getContent(), m.getCreatedAt(), recipientCount
+                m.getSubject(), m.getContent(), m.getCreatedAt(), recipientCount, m.getEventId()
         );
     }
 }

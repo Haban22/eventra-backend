@@ -3,6 +3,7 @@ package com.eventra.backend.module.analytics.service;
 import com.eventra.backend.module.analytics.dto.AdminAnalyticsOverviewResponse;
 import com.eventra.backend.module.analytics.dto.AdminAnalyticsTrendResponse;
 import com.eventra.backend.module.analytics.dto.DailyCountPoint;
+import com.eventra.backend.module.analytics.dto.CategoryPerformanceStats;
 import com.eventra.backend.module.auth.entity.User;
 import com.eventra.backend.module.auth.entity.UserRole;
 import com.eventra.backend.module.auth.entity.UserStatus;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 // Direct aggregate queries against existing normalized tables — no revival of the
@@ -50,6 +52,26 @@ public class AnalyticsService {
     @Transactional(readOnly = true)
     public AdminAnalyticsOverviewResponse getOverview() {
         Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
+
+        Map<String, CategoryPerformanceStats> categoryStats = new HashMap<>();
+        categoryStats.put("Music", new CategoryPerformanceStats(0, 0));
+        categoryStats.put("Technology", new CategoryPerformanceStats(0, 0));
+        categoryStats.put("Business", new CategoryPerformanceStats(0, 0));
+
+        List<com.eventra.backend.module.event.entity.Event> events = eventRepository.findAll();
+        for (com.eventra.backend.module.event.entity.Event e : events) {
+            if (e.getCategory() != null) {
+                String catName = e.getCategory().getName();
+                CategoryPerformanceStats stats = categoryStats.get(catName);
+                if (stats == null) {
+                    stats = new CategoryPerformanceStats(0, 0);
+                }
+                long count = stats.eventsCount() + 1;
+                long attendees = stats.attendeesCount() + (e.getCapacity() != null ? e.getCapacity().getReserved() : 0);
+                categoryStats.put(catName, new CategoryPerformanceStats(count, attendees));
+            }
+        }
+
         return new AdminAnalyticsOverviewResponse(
                 userRepository.count(),
                 userRepository.countByRole(UserRole.ATTENDEE),
@@ -68,7 +90,8 @@ public class AnalyticsService {
                 bookingRepository.sumTotalAmountByStatus(BookingStatus.CONFIRMED),
                 payoutRequestRepository.countByStatus(PayoutStatus.PENDING),
                 payoutRequestRepository.countByStatus(PayoutStatus.APPROVED),
-                payoutRequestRepository.countByStatus(PayoutStatus.REJECTED)
+                payoutRequestRepository.countByStatus(PayoutStatus.REJECTED),
+                categoryStats
         );
     }
 

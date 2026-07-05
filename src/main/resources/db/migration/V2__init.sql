@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
     status                   user_status  NOT NULL DEFAULT 'PENDING_EMAIL_VERIFICATION',
     email_verified           BOOLEAN      NOT NULL DEFAULT FALSE,
     profile_picture_url      TEXT,
+    cover_photo_url          TEXT,
     language_preference      VARCHAR(10)  NOT NULL DEFAULT 'en',
     notification_preferences JSONB        NOT NULL DEFAULT '{}',
     failed_login_attempts    SMALLINT     NOT NULL DEFAULT 0,

@@ -12,5 +12,6 @@ public record BroadcastMessageResponse(
         String subject,
         String content,
         Instant createdAt,
-        long recipientCount
+        long recipientCount,
+        UUID eventId
 ) {}

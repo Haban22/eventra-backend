@@ -39,6 +39,7 @@ CREATE TYPE broadcast_target_role AS ENUM ('ATTENDEE', 'ORGANIZER');
 CREATE TABLE broadcast_messages (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sender_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id    UUID REFERENCES events(id) ON DELETE CASCADE,
     subject     VARCHAR(200) NOT NULL,
     content     TEXT NOT NULL,
     target_role broadcast_target_role NOT NULL,
@@ -46,3 +47,4 @@ CREATE TABLE broadcast_messages (
 );
 CREATE INDEX idx_broadcast_target_role ON broadcast_messages (target_role);
 CREATE INDEX idx_broadcast_sender ON broadcast_messages (sender_id);
+CREATE INDEX idx_broadcast_event ON broadcast_messages (event_id);

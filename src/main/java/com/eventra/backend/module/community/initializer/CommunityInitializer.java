@@ -57,18 +57,6 @@ public class CommunityInitializer {
     @EventListener(ApplicationReadyEvent.class)
     @Transactional
     public void seedCommunities() {
-        for (CommunityDef def : SEEDS) {
-            if (!communityRepository.existsByNameIgnoreCase(def.name())) {
-                Community c = new Community();
-                c.setName(def.name());
-                c.setDescription(def.description());
-                c.setCategory(def.category());
-                c.setCoverImage(def.coverImage());
-                c.setMemberCount(def.memberCount());
-                c.setEventCount(def.eventCount());
-                communityRepository.save(c);
-                log.info("Seeded community: {}", def.name());
-            }
-        }
+        // Seeding of mock/demo communities has been disabled to keep database clean.
     }
 }

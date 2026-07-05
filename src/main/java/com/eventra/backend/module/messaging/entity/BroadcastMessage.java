@@ -22,6 +22,9 @@ public class BroadcastMessage {
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
 
+    @Column(name = "event_id")
+    private UUID eventId;
+
     @Column(nullable = false)
     private String subject;
 

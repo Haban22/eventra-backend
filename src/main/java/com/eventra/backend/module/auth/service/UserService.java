@@ -14,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service("authUserService")
@@ -48,6 +50,7 @@ public class UserService {
         if (request.fullName() != null) user.setFullName(request.fullName().trim());
         if (request.phone() != null) user.setPhone(request.phone().isBlank() ? null : request.phone());
         if (request.profilePictureUrl() != null) user.setProfilePictureUrl(request.profilePictureUrl().isBlank() ? null : request.profilePictureUrl());
+        if (request.coverPhotoUrl() != null) user.setCoverPhotoUrl(request.coverPhotoUrl().isBlank() ? null : request.coverPhotoUrl());
         if (request.languagePreference() != null) user.setLanguagePreference(request.languagePreference());
         if (request.notificationPreferences() != null) user.setNotificationPreferences(request.notificationPreferences());
         if (request.city() != null) user.setCity(request.city().isBlank() ? null : request.city());
@@ -104,6 +107,15 @@ public class UserService {
     public void verifyOnboardingOtp(UUID userId, String code) {
         User user = load(userId);
         otpService.verifyOnboardingOtp(user, code);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> searchUsers(UUID currentUserId, String query) {
+        if (query == null || query.isBlank()) return List.of();
+        return userRepository.searchUsers(query.trim(), currentUserId, PageRequest.of(0, 20))
+                .stream()
+                .map(UserResponse::from)
+                .toList();
     }
 
     private User load(UUID userId) {
