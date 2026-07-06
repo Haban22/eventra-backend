@@ -1,8 +1,33 @@
 package com.eventra.backend.module.gamification.entity;
-import jakarta.persistence.Entity;
+
+import com.eventra.backend.module.gamification.enums.LeaderboardType;
+import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Entity
 @Data
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "type"}))
 public class Leaderboard {
-    // TODO: implement
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
+    @Column(nullable = false)
+    private String displayName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LeaderboardType type;
+
+    @Column(nullable = false)
+    private Long score = 0L;
+
+    private Integer rankPosition;
+
+    private LocalDateTime lastUpdated;
 }

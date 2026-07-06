@@ -3,7 +3,10 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-src/main/resources/application.properties
+.env
+
+# Dev OTP file (generated at runtime in dev mode)
+otp.txt
 
 ### STS ###
 .apt_generated
@@ -32,3 +35,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Python (ai-service) ###
+ai-service/.venv/
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.pytest_cache/
+ai-service/*.egg-info/

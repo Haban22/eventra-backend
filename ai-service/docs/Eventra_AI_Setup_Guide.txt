@@ -1,0 +1,70 @@
+Eventra AI - Setup & Run Guide
+
+1.  Activate the virtual environment
+
+Windows: venv
+
+2.  Install all dependencies
+
+    pip install -r requirements.txt
+
+3.  Start the FastAPI server
+
+    uvicorn main:app –reload
+
+4.  Open Swagger UI
+
+    http://127.0.0.1:8000/docs
+
+5.  Run Automated Tests
+
+    python -m pytest tests/ -v
+
+==================================== AI Features
+====================================
+
+1)  Semantic Event Search GET /search?query=technology
+
+Examples: technology startup football ethical hacking health music
+
+------------------------------------------------------------------------
+
+2)  User Event Recommendation POST /user-recommendations?user_id=1
+
+Users: 1 2 3
+
+------------------------------------------------------------------------
+
+3)  Similar Event Recommendation GET /recommend/1
+
+Event IDs: 1 2 5 9
+
+------------------------------------------------------------------------
+
+4)  Sentiment Analysis POST /sentiment
+
+{ “text”: “This event was amazing and very well organized!” }
+
+------------------------------------------------------------------------
+
+5)  Attendance Prediction POST /predict-attendance
+
+{ “category”: “technology”, “is_free”: 1, “days_until_event”: 10,
+“avg_past_attendees”: 180, “promotion_score”: 0.9, “venue_capacity”: 300
+}
+
+Cold Start Example
+
+{ “category”: “business”, “is_free”: 0, “days_until_event”: 20,
+“avg_past_attendees”: 0, “promotion_score”: 0.5, “venue_capacity”: 150 }
+
+==================================== Notes
+====================================
+
+-   All required .pkl models and dataset files are already included.
+
+-   No need to run: python generate_event_size_data.py python
+    train_event_size_model.py
+
+-   Only retrain if the model files are missing or you want to build a
+    new model.
