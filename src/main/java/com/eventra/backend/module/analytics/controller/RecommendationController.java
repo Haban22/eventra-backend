@@ -72,4 +72,11 @@ public class RecommendationController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(recommendationService.predictAttendanceDetailed(req)));
     }
+
+    @PostMapping("/predict-attendance")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> predictAttendance(
+            @RequestBody Map<String, Object> req
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(recommendationService.predictAttendanceDetailed(req)));
+    }
 }
